@@ -498,7 +498,7 @@ body:not(.is-admin) .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px
 /* Layar lebar: kiri bawah, tetap di tempat */
 @media (min-width: 880px) {
   body::after {
-    content: 'Created by Edunexa \00B7  tomysatriajatmika';
+    content: none;
     position: fixed;
     left: max(20px, env(safe-area-inset-left, 0px));
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -514,7 +514,7 @@ body:not(.is-admin) .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px
 /* Ponsel: di bagian paling bawah halaman */
 @media (max-width: 879px) {
   .foot::after {
-    content: 'Created by Edunexa \00B7  tomysatriajatmika';
+    content: none;
     margin-top: 8px;
     font-size: 11.5px;
     letter-spacing: .03em;
