@@ -5,51 +5,90 @@
     "subtitle": "Akses seluruh materi dan berkas program CERMAT dengan satu ketukan. Pilih folder untuk membukanya di Google Drive.",
     "announcement": ""
   },
-  "links": [
+  "groups": [
     {
-      "title": "Silabus dan Modul",
-      "desc": "Silabus dan modul pembelajaran",
-      "url": "",
-      "icon": "materi",
-      "access": "publik",
-      "primary": false,
-      "hidden": false
+      "id": "fasil",
+      "name": "Fasilitator",
+      "links": [
+        {
+          "title": "Silabus dan Modul",
+          "desc": "Silabus dan modul pembelajaran",
+          "url": "https://drive.google.com/drive/folders/1FHn9V1oGCGxY_MVQS-nzlZIISG_nPk2e?usp=share_link",
+          "icon": "materi",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        },
+        {
+          "title": "Bahan Tayang",
+          "desc": "Slide dan bahan presentasi",
+          "url": "",
+          "icon": "tayang",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        },
+        {
+          "title": "Lembar Kerja",
+          "desc": "Lembar kerja peserta",
+          "url": "",
+          "icon": "template",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        },
+        {
+          "title": "Upload Foto",
+          "desc": "Unggah foto kegiatan",
+          "url": "",
+          "icon": "foto",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        },
+        {
+          "title": "Laporan Fasil",
+          "desc": "Laporan kegiatan",
+          "url": "",
+          "icon": "laporan",
+          "access": "terbatas",
+          "primary": false,
+          "hidden": false
+        }
+      ]
     },
     {
-      "title": "Bahan Tayang",
-      "desc": "Slide dan bahan presentasi",
-      "url": "",
-      "icon": "tayang",
-      "access": "publik",
-      "primary": false,
-      "hidden": false
-    },
-    {
-      "title": "Lembar Kerja",
-      "desc": "Lembar kerja peserta",
-      "url": "",
-      "icon": "template",
-      "access": "publik",
-      "primary": false,
-      "hidden": false
-    },
-    {
-      "title": "Upload Foto",
-      "desc": "Unggah foto kegiatan",
-      "url": "",
-      "icon": "foto",
-      "access": "publik",
-      "primary": false,
-      "hidden": false
-    },
-    {
-      "title": "Laporan Fasil",
-      "desc": "Laporan kegiatan",
-      "url": "",
-      "icon": "laporan",
-      "access": "terbatas",
-      "primary": false,
-      "hidden": false
+      "id": "sekolah",
+      "name": "Sekolah Binaan",
+      "links": [
+        {
+          "title": "Materi dan Modul",
+          "desc": "Materi dan modul untuk sekolah binaan",
+          "url": "",
+          "icon": "materi",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        },
+        {
+          "title": "Lembar Kerja",
+          "desc": "Lembar kerja siswa",
+          "url": "",
+          "icon": "template",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        },
+        {
+          "title": "Unggah Foto Kegiatan",
+          "desc": "Dokumentasi kegiatan sekolah",
+          "url": "",
+          "icon": "foto",
+          "access": "publik",
+          "primary": false,
+          "hidden": false
+        }
+      ]
     }
   ]
 }
