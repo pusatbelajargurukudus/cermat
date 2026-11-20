@@ -26,7 +26,7 @@
           "desc": "Modul Pendampingan",
           "url": "https://drive.google.com/drive/folders/14WA50r6h1ee3oD1baPaa7wLWPdu_7bdw?usp=share_link",
           "icon": "folder",
-          "access": "terbatas",
+          "access": "publik",
           "primary": true,
           "hidden": false,
           "ks": true,
