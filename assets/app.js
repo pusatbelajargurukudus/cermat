@@ -221,7 +221,12 @@
       ];
       if (ok) kids.push(h('div', { class: 'go' }, [ic('arrow', 16, 2)]));
     }
-    if (ok) return h('a', { class: cls, href: l.url.trim(), target: '_blank', rel: 'noopener noreferrer' }, kids);
+    if (ok) {
+      // tautan ke situs ini sendiri (mis. LAPORAN CERMAT) dibuka di jendela yang sama agar tetap di dalam aplikasi
+      var same = false;
+      try { same = new URL(l.url.trim(), location.href).origin === location.origin; } catch (e) { same = false; }
+      return h('a', same ? { class: cls, href: l.url.trim() } : { class: cls, href: l.url.trim(), target: '_blank', rel: 'noopener noreferrer' }, kids);
+    }
     return h('div', { class: cls, 'aria-disabled': 'true' }, kids);
   }
 

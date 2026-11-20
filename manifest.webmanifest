@@ -5,7 +5,7 @@
   "description": "Pustaka Digital CERMAT (Cerdas Numerasi dan Matematika Terapan): akses materi dan berkas program lewat Google Drive.",
   "lang": "id",
   "start_url": "./",
-  "scope": "./",
+  "scope": "../",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#14306B",
