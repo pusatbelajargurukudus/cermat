@@ -3,10 +3,12 @@
  * - data.json SELALU diambil terbaru dari internet; salinan tersimpan hanya dipakai saat offline.
  *   Daftar folder yang diubah lewat Mode Admin tetap tersimpan di GitHub dan tidak tersentuh.
  * - Mode Admin (api.github.com) tidak pernah lewat cache.
- * Naikkan CACHE bila index.html, assets/style.css, atau assets/app.js diubah. */
-const CACHE = 'cermat-pustaka-v6';
+ * Naikkan CACHE bila index.html, assets/style.css, assets/app.js, atau fonts/ diubah. */
+const CACHE = 'cermat-pustaka-v7';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'data.json',
-  'assets/style.css?v=6', 'assets/app.js?v=9', 'assets/logo.png',
+  'assets/style.css?v=7', 'assets/app.js?v=10', 'assets/logo.png', 'fonts/fonts.css?v=1',
+  'fonts/jakarta-400.woff2', 'fonts/jakarta-500.woff2', 'fonts/jakarta-600.woff2', 'fonts/jakarta-700.woff2', 'fonts/jakarta-800.woff2',
+  'fonts/cormorant-600.woff2', 'fonts/cormorant-500i.woff2', 'fonts/cormorant-600i.woff2',
   'assets/logo-pbg.png', 'assets/logo-kemenag.png', 'assets/logo-disdikpora.png', 'assets/logo-djarum.png',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];

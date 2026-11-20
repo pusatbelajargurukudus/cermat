@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#14306B">
+  <meta name="theme-color" content="#0E2550">
   <meta name="description" content="Pustaka Digital CERMAT (Cerdas Numerasi dan Matematika Terapan): akses materi dan berkas program lewat Google Drive.">
   <title>Pustaka Digital CERMAT</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
@@ -12,57 +12,62 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="CERMAT">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
-  <link rel="stylesheet" href="assets/style.css?v=6">
+  <link rel="stylesheet" href="fonts/fonts.css?v=1">
+  <link rel="stylesheet" href="assets/style.css?v=7">
 </head>
 <body>
-  <div class="hero"><div class="gutter">
-    <span class="kicker" id="kicker">Portal Berkas Digital</span>
-    <div class="partners" role="group" aria-label="Mitra program">
-      <img class="p-pbg" src="assets/logo-pbg.png" width="191" height="150" alt="Pusat Belajar Guru Kudus">
-      <i aria-hidden="true"></i>
-      <img class="p-kemenag" src="assets/logo-kemenag.png" width="126" height="120" alt="Kementerian Agama">
-      <i aria-hidden="true"></i>
-      <img class="p-disdik" src="assets/logo-disdikpora.png" width="452" height="120" alt="Disdikpora Kabupaten Kudus">
-      <i aria-hidden="true"></i>
-      <img class="p-djarum" src="assets/logo-djarum.png" width="537" height="90" alt="Bakti Pendidikan Djarum Foundation">
+  <header class="top">
+    <div class="mitra">
+      <span class="pita l" aria-hidden="true"><span class="lines"><i></i><b></b><i></i></span><em></em></span>
+      <div class="partners" role="group" aria-label="Mitra program">
+        <img class="p-pbg" src="assets/logo-pbg.png" width="191" height="150" alt="Pusat Belajar Guru Kudus">
+        <i aria-hidden="true"></i>
+        <img class="p-kemenag" src="assets/logo-kemenag.png" width="126" height="120" alt="Kementerian Agama">
+        <i aria-hidden="true"></i>
+        <img class="p-disdik" src="assets/logo-disdikpora.png" width="452" height="120" alt="Disdikpora Kabupaten Kudus">
+        <i aria-hidden="true"></i>
+        <img class="p-djarum" src="assets/logo-djarum.png" width="537" height="90" alt="Bakti Pendidikan Djarum Foundation">
+      </div>
+      <span class="pita r" aria-hidden="true"><em></em><span class="lines"><i></i><b></b><i></i></span></span>
     </div>
-  </div></div>
+    <div class="brandrow wrap">
+      <div class="roundel"><img src="assets/logo.png" width="150" height="167" alt="Logo CERMAT, Cerdas Numerasi dan Matematika Terapan"></div>
+      <div class="bt">
+        <h1 id="title">Pustaka Digital CERMAT</h1>
+        <p class="tagline">Cerdas Numerasi dan Matematika Terapan</p>
+      </div>
+      <div class="userbar" id="userbar" hidden></div>
+    </div>
+  </header>
 
-  <main class="col gutter">
-    <header class="brand">
-      <div class="logo-card"><img src="assets/logo.png" width="150" height="167" alt="Logo CERMAT, Cerdas Numerasi dan Matematika Terapan"></div>
-      <h1 id="title">Pustaka Digital CERMAT</h1>
-      <p class="sub" id="subtitle">Akses seluruh materi dan berkas program CERMAT dengan satu ketukan. Pilih folder untuk membukanya di Google Drive.</p>
-      <div class="rule" aria-hidden="true"><i></i><b></b><i></i></div>
-    </header>
-
+  <main class="wrap page">
     <div class="notice" id="notice" role="status" hidden></div>
-    <div class="userbar" id="userbar" hidden></div>
     <div class="authbox" id="auth" hidden></div>
 
-    <div class="label">Folder Utama</div>
+    <div class="label">
+      <h2>Folder utama</h2>
+      <p class="sub" id="subtitle">Akses seluruh materi dan berkas program CERMAT dengan satu ketukan.</p>
+    </div>
     <div id="list" aria-live="polite">
       <noscript><div class="empty-note">Halaman ini memerlukan JavaScript untuk menampilkan daftar folder. Aktifkan JavaScript lalu muat ulang.</div></noscript>
     </div>
 
     <div id="addwrap"></div>
-
-    <footer class="foot">
-      <span class="fb">CERMAT</span>
-      <span>Cerdas Numerasi dan Matematika Terapan</span>
-      <span>Tautan terbuka di tab baru dan mengikuti izin akses Google Drive Anda.</span>
-      <button type="button" class="adminlink" id="adminlink" hidden>Admin</button>
-    </footer>
   </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <span>Program CERMAT · Pusat Belajar Guru Kudus</span>
+      <span>Tautan Google Drive mengikuti izin akses akun Anda.</span>
+      <button type="button" class="adminlink" id="adminlink" hidden>Admin</button>
+    </div>
+  </footer>
 
   <div id="adminbar" class="adminbar" hidden></div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="../laporanCermat/js/config.js"></script>
-  <script src="assets/app.js?v=9"></script>
+  <script src="assets/app.js?v=10"></script>
   <script>
     /* Aplikasi terpasang (PWA): simpan tampilan untuk dibuka saat sinyal lemah. */
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
