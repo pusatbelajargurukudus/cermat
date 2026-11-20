@@ -29,7 +29,10 @@
     plus: '<path d="M12 5v14M5 12h14"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
-    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.6a6.5 6.5 0 0 1 3.5 5.4"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+    chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>'
   };
   var ICON_NAMES = ['folder', 'materi', 'soal', 'foto', 'laporan', 'template', 'tayang', 'unggah', 'link'];
   var ICON_LABEL = {
@@ -278,6 +281,17 @@
     aw.textContent = '';
     if (admin) {
       aw.appendChild(h('button', { type: 'button', class: 'btn ghost wide', onclick: addLink }, [ic('plus', 18, 2.2), h('span', { text: 'Tambah folder' })]));
+    } else if (me && me.peran === 'admin') {
+      var tile = function (icon, text, href, fn) {
+        var kids = [ic(icon, 20, 2), h('span', { text: text })];
+        return href ? h('a', { class: 'atile', href: href }, kids) : h('button', { type: 'button', class: 'atile', onclick: fn }, kids);
+      };
+      aw.appendChild(h('div', { class: 'label', text: 'Panel Admin' }));
+      aw.appendChild(h('div', { class: 'adminpanel' }, [
+        tile('users', 'Kelola Pengguna', LAPORAN + '#/pengguna'),
+        tile('gear', 'Atur Folder', null, adminEntry),
+        tile('chart', 'Pantau Laporan', LAPORAN + '#/lihat')
+      ]));
     }
   }
 
@@ -688,7 +702,7 @@
     var a = $('auth'), ub = $('userbar'), logged = !!me;
     document.body.classList.toggle('need-login', !logged);
     ['label', 'list', 'addwrap'].forEach(function (id) { var el = id === 'label' ? document.querySelector('.label') : $(id); if (el) el.hidden = !logged; });
-    $('adminlink').hidden = !(logged && me.peran === 'admin') || admin;
+    $('adminlink').hidden = true;   // pindah ke Panel Admin
     if (logged) {
       a.hidden = true; a.textContent = '';
       ub.textContent = '';
@@ -817,7 +831,6 @@
     token = '';
     fileSha = null;
     clearCred();
-    $('adminlink').hidden = !(me && me.peran === 'admin');
     loadPublic();
   }
 

@@ -650,3 +650,10 @@ body:not(.is-admin) .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px
 .pwf .eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 9px; background: none; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .pwf .eye:hover, .pwf .eye:focus-visible { color: var(--ink); background: var(--line); outline: none; }
 body.need-login .label, body.need-login #list, body.need-login #addwrap { display: none; }
+
+/* ---------- Panel Admin (khusus akun admin) ---------- */
+#addwrap .label { margin-top: 14px; }
+.adminpanel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+.atile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 76px; padding: 10px 8px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; box-shadow: var(--shadow); }
+.atile svg { color: var(--gold); }
+.atile:hover, .atile:focus-visible { border-color: var(--gold); outline: none; box-shadow: var(--shadow-lg); }
