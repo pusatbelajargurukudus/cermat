@@ -51,8 +51,8 @@
           "access": "publik",
           "primary": true,
           "hidden": false,
-          "ks": false,
-          "guru": false
+          "ks": true,
+          "guru": true
         },
         {
           "title": "Laporan Fasil",
