@@ -1,65 +1,60 @@
-# LAPORAN CERMAT v2.4
+# Pustaka Digital CERMAT (versi dengan Mode Admin)
 
-Aplikasi web untuk menyusun **laporan 22 pendampingan Program CERMAT** (Cerdas Numerasi dan Matematika Terapan), dipakai bersama oleh semua fasilitator.
+Halaman tombol menuju folder Google Drive. Tautan Drive diisi lewat **Mode Admin** di halaman itu sendiri, tanpa Google Sheets dan tanpa menyunting kode.
 
-- **Data bersama di Google Drive** akun admin, dengan Google Apps Script sebagai server. Gratis.
-- **Akun masing-masing dengan peran:** Admin, Fasilitator, dan Pemantau (hanya melihat dan mengunduh).
-- **Data sekolah dibagi.** Admin mendaftarkan sekolah dan memasangkan Fasilitator 1 & 2; fasilitator melengkapi nama & NIP kepala sekolah serta data guru.
-- **Reward bintang.** Fasilitator mengisi bintang setiap peserta yang hadir di langkah *Reward*; totalnya terakumulasi dari P1–P22, tercetak di PDF, dan bisa dipantau di menu *Total Reward*.
-- **Jurnal kegiatan ditandatangani** kepala sekolah dan fasilitator yang hadir.
-- **Isi laporan otomatis** dari *Silabus Pendampingan CERMAT (revisi 15-11-2026)*.
-- **Nilai pretes/postes** diimpor dari Google Form; hanya baris sekolah yang dilaporkan yang diambil.
-- **PDF** disusun di browser, lalu diarsipkan otomatis ke folder sekolah di Drive.
-- **Tetap bisa dipakai saat sinyal hilang.** Perubahan dan foto masuk antrean, lalu terkirim otomatis saat online.
+## Isi paket
 
-**Cara pasang:** lihat **[PANDUAN-DEPLOY.md](PANDUAN-DEPLOY.md)**.
+| Berkas | Fungsi |
+|---|---|
+| `index.html`, `assets/` | Halaman dan tampilan. Tidak perlu diubah. |
+| `data.json` | Daftar folder dan teks halaman. Mode Admin yang mengubah berkas ini. |
 
-## Menu
+## Pemasangan (sekali saja, sekitar 10 menit)
 
-| Admin | Fasilitator | Pemantau |
-|---|---|---|
-| Kelola Pengguna | Data Sekolah | Data Sekolah |
-| Data Sekolah | Buat Laporan | Lihat Laporan |
-| Lihat Laporan (pemantauan, hanya baca) | Unduh Laporan | Unduh Laporan |
-| Unduh Laporan | Total Reward (sekolah binaan) | Total Reward |
-| Total Reward | | |
+1. Buat akun di <https://github.com>, lalu klik **New repository**. Beri nama `cermat`, pilih **Public**, klik **Create repository**.
+2. Klik **uploading an existing file**, seret **semua isi** folder ini (`index.html`, `data.json`, folder `assets`), lalu **Commit changes**.
+3. Buka **Settings > Pages**. Pilih **Deploy from a branch**, branch **main**, folder **/ (root)**, lalu **Save**. Tunggu 1 sampai 2 menit. Alamat situs: `https://AKUN.github.io/cermat/`.
+4. (Opsional) Pendekkan alamat di <https://s.id>.
 
-Langkah form laporan:
-1. Pelaksanaan (fasil hadir, tanggal DD/MM/YYYY, jam, tempat)
-2. Pretes & Kehadiran
-3. Postes & Capaian (P17–19: Observasi & Capaian)
-4. Evaluasi
-5. Reward (bintang untuk peserta yang hadir; hanya fasilitator pemegang sekolah yang bisa mengisi)
-6. Lampiran
-7. Periksa & Unduh
+## Membuat token admin (sekali saja)
 
-Langkah pelaksanaan kegiatan selalu persis sesuai silabus.
+Token adalah "kunci" yang mengizinkan halaman menyimpan perubahan ke repositori Anda.
 
-Lingkaran nama di kanan atas berisi Profil Saya, Ganti Password, dan Keluar, serta khusus admin **Pengaturan Program** (kop/logo dan identitas program).
+1. Di GitHub: foto profil > **Settings** > **Developer settings** > **Personal access tokens** > **Fine-grained tokens** > **Generate new token**.
+2. **Token name**: `cermat-admin`. **Expiration**: pilih masa berlaku terpanjang yang tersedia.
+3. **Repository access**: **Only select repositories**, pilih `cermat`.
+4. **Permissions > Repository permissions > Contents**: ubah ke **Read and write**.
+5. Klik **Generate token**, lalu **salin tokennya** (hanya tampil sekali). Simpan di pengelola kata sandi atau catatan pribadi.
 
-## Format Google Form pretes/postes (Pendampingan 1–7)
+## Memakai Mode Admin
 
-Sarannya satu form per pendampingan, mode **Kuis**, dengan pertanyaan: **Nama Lengkap**, **Asal Sekolah** (*drop-down*), **Jabatan/Kelas**, dan **Jenis Tes** (Pre-tes / Post-tes). Unduh responsnya dari Google Sheets sebagai `.csv` atau `.xlsx`, lalu impor di langkah *Kehadiran & Nilai*. File `contoh/contoh-respons-google-form.csv` berisi **data tiruan** untuk mencoba fitur ini.
+1. Buka situs, gulir ke paling bawah, tekan **Admin**.
+2. Isi **Repositori** (`akun/cermat`, biasanya terisi otomatis) dan **Token**. Centang **Ingat di perangkat ini** bila perangkat pribadi.
+3. Pada tiap menu, tekan **Ubah**, tempel **tautan Google Drive**, lalu **Simpan**.
+   - Mengambil tautan: di Google Drive klik kanan folder > **Bagikan** > atur akses ke **Siapa saja yang memiliki link** > **Salin link**.
+4. Tombol di setiap kartu: naik, turun, sembunyikan/tampilkan, ubah. **Tambah folder** di bawah daftar. **Pengaturan** untuk judul dan pengumuman.
+5. Tekan **Simpan ke GitHub**. Pengunjung melihat perubahan dalam 1 sampai 2 menit.
+6. Selesai, tekan **Keluar** (token dihapus dari perangkat).
 
-Aturan perhitungan nilai:
-- Rata-rata pretes dan postes masing-masing dihitung dari semua yang mengerjakan tes itu.
-- Kenaikan ditulis dalam poin dan persen.
-- Jika seseorang mengirim lebih dari sekali, yang dipakai kiriman terakhir.
+Bila penyimpanan otomatis bermasalah, tekan **Salin data**, lalu di GitHub buka `data.json`, tekan ikon pensil, ganti seluruh isinya, dan **Commit changes**.
 
-## Struktur file
+## Menambah admin lain
 
-```
-index.html, css/, icons/ (logo CERMAT), manifest.webmanifest, sw.js   tampilan
-js/config.js        ← URL server Apps Script (wajib diisi)
-js/silabus.js       data 22 pendampingan
-js/api.js           komunikasi dengan server
-js/db.js            cache lokal & antrean offline
-js/importer.js      baca respons Google Form
-js/report.js        kalimat otomatis, nilai, daftar periksa
-js/pdf.js           penyusun PDF A4
-js/app.js           antarmuka
-vendor/             pdf-lib 1.17.1 & JSZip 3.10.1 (MIT)
-apps-script/Code.gs server (ditempel di Google Apps Script)
-```
+Pemilik repositori: **Settings > Collaborators > Add people**, masukkan akun GitHub admin. Admin tersebut membuat tokennya sendiri (langkah "Membuat token admin"; pilih repositori `cermat` jika sudah muncul di daftar).
 
-**Catatan silabus:** judul Pendampingan 13 di halaman isi silabus tertulis "CPA", sedangkan di daftar isinya "CVA". Aplikasi memakai "CPA". Ubah di `js/silabus.js` bila yang benar CVA.
+## Keamanan, perlu diketahui
+
+- Tombol **Admin** tampak oleh semua orang, tetapi tanpa token yang sah tidak ada yang bisa menyimpan perubahan. Keamanannya ada di token, bukan di tombol.
+- Siapa pun yang memegang token dapat mengubah isi repositori `cermat`. Jangan dibagikan lewat grup. Bila bocor, cabut di GitHub (Settings > Developer settings > token > Delete) lalu buat yang baru.
+- Repositori dan `data.json` bersifat publik. Isi hanya nama folder dan tautan yang memang boleh dilihat umum. Izin sebenarnya tetap diatur di Google Drive.
+
+## Bila ada masalah
+
+| Gejala | Solusi |
+|---|---|
+| "Token ditolak" | Token salah, kedaluwarsa, atau dicabut. Buat token baru. |
+| "Tidak punya izin menulis" | Pada token, izin **Contents** harus **Read and write**. |
+| "Repositori atau data.json tidak ditemukan" | Periksa penulisan `akun/cermat`, pastikan `data.json` ada, dan token mencakup repositori itu. |
+| "Data di GitHub sudah berubah" | Ada admin lain yang menyimpan lebih dulu. Muat ulang, masuk lagi, ulangi perubahan. |
+| Perubahan belum tampil bagi pengunjung | Tunggu 1 sampai 2 menit, lalu muat ulang (di ponsel bisa perlu tutup tab). |
+| Tombol bertuliskan "Segera hadir" | Tautan folder belum diisi atau tidak diawali `https://`. |
