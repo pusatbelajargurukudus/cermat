@@ -273,6 +273,7 @@
     curLinks().forEach(function (l, i) {
       if (admin) { list.appendChild(adminCard(l, i)); shown++; return; }
       if (l.hidden || !canSee(l)) return;
+      if (me.peran === 'admin' && isLaporanLink(l)) return;   // admin memakai "Pantau Laporan" di Panel Admin
       shown++;
       list.appendChild(publicCard(l));
     });
@@ -681,6 +682,10 @@
   }
 
   /* tombol besar (gaya sama dengan kartu "tombol utama" di daftar folder) */
+  function isLaporanLink(l) {
+    try { return /^\/laporancermat(\/|$)/i.test(new URL(l.url, location.href).pathname); } catch (e) { return false; }
+  }
+
   function laporanCard(title, desc, hash) {
     return h('a', { class: 'card primary', href: LAPORAN + (hash || ''), title: desc }, [ic('laporan', 22, 2), h('span', { class: 'ttl', text: title })]);
   }

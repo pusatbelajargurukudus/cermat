@@ -4,9 +4,9 @@
  *   Daftar folder yang diubah lewat Mode Admin tetap tersimpan di GitHub dan tidak tersentuh.
  * - Mode Admin (api.github.com) tidak pernah lewat cache.
  * Naikkan CACHE bila index.html, assets/style.css, atau assets/app.js diubah. */
-const CACHE = 'cermat-pustaka-v5';
+const CACHE = 'cermat-pustaka-v6';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'data.json',
-  'assets/style.css?v=6', 'assets/app.js?v=8', 'assets/logo.png',
+  'assets/style.css?v=6', 'assets/app.js?v=9', 'assets/logo.png',
   'assets/logo-pbg.png', 'assets/logo-kemenag.png', 'assets/logo-disdikpora.png', 'assets/logo-djarum.png',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
