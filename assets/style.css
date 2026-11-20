@@ -205,6 +205,11 @@ a.card { transition: transform .18s ease, box-shadow .18s ease, border-color .18
 a.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 a.card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .card.hl { border-color: var(--gold); }
+.card.guide { background: transparent; border: 2px dashed var(--line-strong); box-shadow: none; }
+.card.guide .chipicon { background: transparent; border: 1px solid var(--line-strong); }
+a.card.guide:hover { border-color: var(--gold); border-style: solid; background: var(--surface); }
+.guidelink { display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: center; margin-top: -4px; padding: 6px 10px; border-radius: 8px; color: var(--ink); font-size: 13px; font-weight: 700; text-decoration: none; }
+.guidelink:hover, .guidelink:focus-visible { background: var(--chip); outline: none; }
 .card.empty { border: 2px dashed var(--line-strong); box-shadow: none; background: transparent; }
 
 .chipicon {

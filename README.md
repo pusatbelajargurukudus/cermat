@@ -8,6 +8,7 @@ Halaman tombol menuju folder Google Drive. Tautan Drive diisi lewat **Mode Admin
 |---|---|
 | `index.html`, `assets/` | Halaman dan tampilan. Tidak perlu diubah. |
 | `data.json` | Daftar folder dan teks halaman. Mode Admin yang mengubah berkas ini. |
+| `panduan/` | Petunjuk penggunaan per peran (halaman web + PDF). Dibuka dari kartu **Petunjuk Penggunaan** dan dari halaman masuk; tersimpan di HP setelah dibuka pertama kali. Naikkan `PANDUAN` di `sw.js` bila isinya diganti. |
 
 ## Pemasangan (sekali saja, sekitar 10 menit)
 

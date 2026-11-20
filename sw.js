@@ -3,10 +3,14 @@
  * - data.json SELALU diambil terbaru dari internet; salinan tersimpan hanya dipakai saat offline.
  *   Daftar folder yang diubah lewat Mode Admin tetap tersimpan di GitHub dan tidak tersentuh.
  * - Mode Admin (api.github.com) tidak pernah lewat cache.
- * Naikkan CACHE bila index.html, assets/style.css, assets/app.js, atau fonts/ diubah. */
-const CACHE = 'cermat-pustaka-v7';
+ * - Petunjuk (panduan/) disimpan di HP saat pertama dibuka; pembukaan berikutnya langsung dari HP
+ *   (juga offline) dan diperbarui diam-diam saat ada sinyal. PDF petunjuk tidak disimpan otomatis.
+ * Naikkan CACHE bila index.html, assets/style.css, assets/app.js, atau fonts/ diubah.
+ * Naikkan PANDUAN bila isi folder panduan/ diganti. */
+const CACHE = 'cermat-pustaka-v8';
+const PANDUAN = 'cermat-panduan-v1';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'data.json',
-  'assets/style.css?v=7', 'assets/app.js?v=10', 'assets/logo.png', 'fonts/fonts.css?v=1',
+  'assets/style.css?v=8', 'assets/app.js?v=11', 'assets/logo.png', 'fonts/fonts.css?v=1',
   'fonts/jakarta-400.woff2', 'fonts/jakarta-500.woff2', 'fonts/jakarta-600.woff2', 'fonts/jakarta-700.woff2', 'fonts/jakarta-800.woff2',
   'fonts/cormorant-600.woff2', 'fonts/cormorant-500i.woff2', 'fonts/cormorant-600i.woff2',
   'assets/logo-pbg.png', 'assets/logo-kemenag.png', 'assets/logo-disdikpora.png', 'assets/logo-djarum.png',
@@ -21,7 +25,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys
     // hanya cache milik portal ini, plus sisa salah unggah LAPORAN CERMAT (20 Nov 2026); cache aplikasi lain tidak disentuh
-    .filter(k => (k.indexOf('cermat-pustaka-') === 0 && k !== CACHE) || k === 'laporan-cermat-v6')
+    .filter(k => (k.indexOf('cermat-pustaka-') === 0 && k !== CACHE) || (k.indexOf('cermat-panduan-') === 0 && k !== PANDUAN) || k === 'laporan-cermat-v6')
     .map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
@@ -36,6 +40,17 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin || !url.pathname.startsWith(new URL('./', self.registration.scope).pathname)) return;
+  // petunjuk: tampil dari HP bila sudah pernah dibuka, sambil diperbarui di belakang layar
+  if (url.pathname.indexOf('/panduan/') >= 0) {
+    if (/\.pdf$/i.test(url.pathname)) return;
+    const key = url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname;
+    e.respondWith(caches.open(PANDUAN).then(c => c.match(key).then(r => {
+      const net = fetch(req).then(res => { if (res && res.ok) c.put(key, res.clone()); return res; }).catch(() => r);
+      if (r) { e.waitUntil(net.catch(() => null)); return r; }
+      return net;
+    })));
+    return;
+  }
   // data.json & halaman: jaringan dulu, cadangan dari cache saat offline
   if (req.mode === 'navigate' || url.pathname.endsWith('/data.json')) {
     e.respondWith(fetch(req).then(res => put(url.pathname.endsWith('/data.json') ? 'data.json' : req, res))

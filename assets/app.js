@@ -3,12 +3,14 @@
    mengubah daftar itu dan menyimpannya kembali ke data.json di GitHub.
    Portal wajib login memakai akun LAPORAN CERMAT (server Apps Script yang sama).
    Admin, Fasilitator, Pemantau melihat semua folder; Kepala Sekolah & Guru hanya folder yang dicentang untuk mereka.
-   v10: tampilan baru (kepala halaman biru tua, kartu putih), profil di kanan atas membuka dialog "Akun Saya". */
+   v10: tampilan baru (kepala halaman biru tua, kartu putih), profil di kanan atas membuka dialog "Akun Saya".
+   v11: kartu "Petunjuk Penggunaan" (folder panduan/) dan tautan petunjuk di halaman masuk. */
 (function () {
   'use strict';
 
   var P = {
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    bantuan: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.3-2.4 3.8"/><path d="M12 17.2h.01" stroke-width="2.6"/>',
     materi: '<path d="M2 5h6a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2z"/><path d="M22 5h-6a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h7z"/>',
     soal: '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7.5h7"/><path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" stroke-width="2.6"/>',
     foto: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>',
@@ -273,6 +275,7 @@
       list.appendChild(publicCard(l));
     });
     if (!shown) list.appendChild(h('div', { class: 'empty-note', text: admin ? 'Belum ada folder. Tekan "Tambah folder".' : 'Belum ada folder yang ditampilkan.' }));
+    if (!admin) list.appendChild(guideCard());
     var aw = $('addwrap');
     aw.textContent = '';
     if (admin) {
@@ -678,6 +681,17 @@
     try { return /^\/laporancermat(\/|$)/i.test(new URL(l.url, location.href).pathname); } catch (e) { return false; }
   }
 
+  /* Petunjuk Penggunaan: halaman di folder panduan/, sesuai peran (admin: daftar semua petunjuk) */
+  var PANDUAN = { fasilitator: 'fasilitator.html', kepsek: 'kepala-sekolah.html', guru: 'guru.html', pemantau: 'pemantau.html', admin: '' };
+  function guideCard() {
+    var f = PANDUAN[me.peran];
+    return h('a', { class: 'card guide', href: 'panduan/' + (f || '') }, [
+      h('div', { class: 'chipicon' }, [ic('bantuan', 26)]),
+      h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: 'Petunjuk Penggunaan' }), h('div', { class: 'meta' }, [h('span', { text: me.peran === 'admin' ? 'Petunjuk untuk semua peran' : 'Cara memakai aplikasi CERMAT' })])]),
+      h('div', { class: 'go' }, [ic('arrow', 18, 2)])
+    ]);
+  }
+
   function laporanCard(title, desc, hash) {
     return h('a', { class: 'card hl', href: LAPORAN + (hash || '') }, [
       h('div', { class: 'chipicon' }, [ic('laporan', 26)]),
@@ -725,7 +739,8 @@
       h('h2', { text: 'Masuk' }),
       h('p', { class: 'dnote', text: 'Gunakan akun yang diberikan admin program (akun yang sama dengan LAPORAN CERMAT).' }),
       field('Username', inU), field('Password', pw.el), err, go,
-      h('p', { class: 'fh', text: 'Lupa password? Hubungi admin program.' })
+      h('p', { class: 'fh', text: 'Lupa password? Hubungi admin program.' }),
+      h('a', { class: 'guidelink', href: 'panduan/pasang.html' }, [ic('bantuan', 16, 2), h('span', { text: 'Petunjuk memasang aplikasi & masuk' })])
     ]);
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
