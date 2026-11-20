@@ -8,6 +8,10 @@
   <meta name="description" content="Pustaka Digital CERMAT (Cerdas Numerasi dan Matematika Terapan): akses materi dan berkas program lewat Google Drive.">
   <title>Pustaka Digital CERMAT</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="CERMAT">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
@@ -56,5 +60,11 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="assets/app.js?v=4"></script>
+  <script>
+    /* Aplikasi terpasang (PWA): simpan tampilan untuk dibuka saat sinyal lemah. */
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+    }
+  </script>
 </body>
 </html>
