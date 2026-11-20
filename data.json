@@ -13,10 +13,10 @@
         {
           "title": "Silabus dan Modul",
           "desc": "Silabus dan modul pembelajaran",
-          "url": "https://drive.google.com/drive/folders/1FHn9V1oGCGxY_MVQS-nzlZIISG_nPk2e?usp=share_link",
+          "url": "https://drive.google.com/drive/folders/14WA50r6h1ee3oD1baPaa7wLWPdu_7bdw?usp=share_link",
           "icon": "materi",
           "access": "publik",
-          "primary": false,
+          "primary": true,
           "hidden": false
         },
         {
