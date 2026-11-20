@@ -632,3 +632,21 @@ body:not(.is-admin) .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px
   .chipicon { width: 36px; height: 36px; }
   .tab { min-height: 34px; }
 }
+
+/* ---------- Login & pengguna ---------- */
+.adminlink[hidden], .userbar[hidden], .authbox[hidden] { display: none !important; }
+.userbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; padding: 8px 8px 8px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font-size: 13.5px; box-shadow: var(--shadow); }
+.userbar .who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.userbar .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.userbar .btn { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.authbox .login { display: flex; flex-direction: column; gap: 14px; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+.authbox h2 { margin: 0; font-family: var(--f-display); color: var(--ink); font-size: 22px; }
+.authbox .dnote { margin: -6px 0 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.authbox input { width: 100%; min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; }
+.authbox input:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+.authbox .btn.pri { width: 100%; min-height: 48px; }
+.pwf { position: relative; }
+.pwf input { padding-right: 48px; }
+.pwf .eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 9px; background: none; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.pwf .eye:hover, .pwf .eye:focus-visible { color: var(--ink); background: var(--line); outline: none; }
+body.need-login .label, body.need-login #list, body.need-login #addwrap { display: none; }

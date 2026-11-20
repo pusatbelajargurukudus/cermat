@@ -1,6 +1,8 @@
 /* Pustaka Digital CERMAT
    Daftar folder dibaca dari data.json. Mode Admin (tombol "Admin" di bawah halaman)
-   mengubah daftar itu dan menyimpannya kembali ke data.json di GitHub. */
+   mengubah daftar itu dan menyimpannya kembali ke data.json di GitHub.
+   Portal wajib login memakai akun LAPORAN CERMAT (server Apps Script yang sama).
+   Admin, Fasilitator, Pemantau melihat semua folder; Kepala Sekolah & Guru hanya folder yang dicentang untuk mereka. */
 (function () {
   'use strict';
 
@@ -24,7 +26,10 @@
     edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
     eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.7 8.4 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>'
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
   };
   var ICON_NAMES = ['folder', 'materi', 'soal', 'foto', 'laporan', 'template', 'tayang', 'unggah', 'link'];
   var ICON_LABEL = {
@@ -90,7 +95,9 @@
           icon: ICON_NAMES.indexOf(l.icon) !== -1 ? l.icon : 'folder',
           access: l.access === 'terbatas' ? 'terbatas' : 'publik',
           primary: l.primary === true,
-          hidden: l.hidden === true
+          hidden: l.hidden === true,
+          ks: l.ks === true,
+          guru: l.guru === true
         };
       });
   }
@@ -116,9 +123,10 @@
     return out;
   }
 
+  /* Satu daftar saja: grup pertama. Grup lain (mis. "Sekolah Binaan") tetap tersimpan di data.json tetapi tidak ditampilkan. */
   function curLinks() {
-    if (!state.groups[gi]) gi = 0;
-    return state.groups[gi].links;
+    gi = 0;
+    return state.groups[0].links;
   }
 
   function renderTabs() {
@@ -140,10 +148,7 @@
     renderAll();
   }
 
-  function readHash() {
-    var id = (location.hash || '').replace('#', '');
-    for (var i = 0; i < state.groups.length; i++) if (state.groups[i].id === id) { gi = i; return; }
-  }
+  function readHash() { gi = 0; }
 
   function validUrl(u) { return typeof u === 'string' && /^https:\/\/[^\s<>"']+$/i.test(u.trim()); }
 
@@ -239,6 +244,8 @@
     meta.push(ok ? tag('pub', 'link', 'Tautan terpasang') : tag('hid', null, 'Belum ada tautan'));
     if (l.hidden) meta.push(tag('hid', 'eyeoff', 'Disembunyikan'));
     if (l.primary) meta.push(tag('lim', null, 'Tombol utama'));
+    if (l.ks) meta.push(tag('pub', 'user', 'Kepala Sekolah'));
+    if (l.guru) meta.push(tag('pub', 'user', 'Guru'));
     var n = curLinks().length;
     return h('div', { class: 'card adm' + (l.hidden ? ' off' : '') }, [
       h('div', { class: 'chipicon' }, [ic(l.icon, 22)]),
@@ -258,9 +265,11 @@
   function renderList() {
     var list = $('list'), shown = 0;
     list.textContent = '';
+    if (!me) return;
+    if (!admin && me.peran === 'kepsek') { list.appendChild(laporanCard('Pengesahan Laporan', 'Periksa & sahkan laporan pendampingan', '#/pengesahan')); shown++; }
     curLinks().forEach(function (l, i) {
       if (admin) { list.appendChild(adminCard(l, i)); shown++; return; }
-      if (l.hidden) return;
+      if (l.hidden || !canSee(l)) return;
       shown++;
       list.appendChild(publicCard(l));
     });
@@ -281,7 +290,7 @@
     if (s.title) document.title = s.title;
     var n = $('notice');
     n.textContent = '';
-    if (s.announcement) {
+    if (s.announcement && me) {
       n.appendChild(h('strong', { text: 'Pengumuman' }));
       n.appendChild(h('span', { text: s.announcement }));
       n.hidden = false;
@@ -291,6 +300,7 @@
   function renderAll() {
     renderSite();
     renderTabs();
+    renderAuth();
     renderList();
     renderBar();
   }
@@ -527,6 +537,8 @@
     ]);
     var inPri = h('input', { type: 'checkbox', checked: l.primary });
     var inHid = h('input', { type: 'checkbox', checked: l.hidden });
+    var inKs = h('input', { type: 'checkbox', checked: l.ks });
+    var inGuru = h('input', { type: 'checkbox', checked: l.guru });
     var err = errBox();
     var del = btn('Hapus', 'danger');
     var armed = false;
@@ -543,6 +555,10 @@
       h('div', { class: 'two' }, [field('Ikon', inIcon), field('Label akses', inAcc)]),
       h('label', { class: 'chk' }, [inPri, h('span', { text: 'Tampilkan sebagai tombol besar yang menonjol' })]),
       h('label', { class: 'chk' }, [inHid, h('span', { text: 'Sembunyikan dari pengunjung' })]),
+      h('div', { class: 'fl', text: 'Juga tampilkan untuk' }),
+      h('label', { class: 'chk' }, [inKs, h('span', { text: 'Kepala Sekolah' })]),
+      h('label', { class: 'chk' }, [inGuru, h('span', { text: 'Guru' })]),
+      h('span', { class: 'fh', text: 'Admin, Fasilitator, dan Pemantau selalu melihat semua folder yang tidak disembunyikan.' }),
       err
     ], [del, btn('Batal', 'ghost', { onclick: function () { d.close(); } }), btn('Simpan', 'pri', { type: 'submit' })]);
     d.form.addEventListener('submit', function (ev) {
@@ -552,7 +568,7 @@
       if (url && !validUrl(url)) { showErr(err, 'Tautan harus diawali https:// dan tanpa spasi.'); return; }
       curLinks()[i] = {
         title: name, desc: inDesc.value.trim(), url: url, icon: inIcon.value,
-        access: inAcc.value, primary: inPri.checked, hidden: inHid.checked
+        access: inAcc.value, primary: inPri.checked, hidden: inHid.checked, ks: inKs.checked, guru: inGuru.checked
       };
       changed();
       d.close();
@@ -561,7 +577,7 @@
   }
 
   function addLink() {
-    curLinks().push({ title: 'Folder baru', desc: '', url: '', icon: 'folder', access: 'publik', primary: false, hidden: false });
+    curLinks().push({ title: 'Folder baru', desc: '', url: '', icon: 'folder', access: 'publik', primary: false, hidden: false, ks: false, guru: false });
     changed();
     editLink(curLinks().length - 1);
   }
@@ -572,15 +588,11 @@
     var b = h('input', { type: 'text', value: s.title, maxlength: '60' });
     var c = h('textarea', { rows: '3', maxlength: '300', text: s.subtitle });
     var e = h('textarea', { rows: '3', maxlength: '300', placeholder: 'Kosongkan bila tidak ada pengumuman', text: s.announcement });
-    var g1 = h('input', { type: 'text', value: state.groups[0].name, maxlength: '30' });
-    var g2 = h('input', { type: 'text', value: state.groups[1].name, maxlength: '30' });
     var d = openDialog('Pengaturan halaman', [
       field('Teks pita atas', a),
       field('Judul', b),
       field('Kalimat pengantar', c),
-      field('Pengumuman', e, 'Muncul di atas daftar folder.'),
-      field('Nama tab pertama', g1),
-      field('Nama tab kedua', g2)
+      field('Pengumuman', e, 'Muncul di atas daftar folder.')
     ], [btn('Batal', 'ghost', { onclick: function () { d.close(); } }), btn('Simpan', 'pri', { type: 'submit' })]);
     d.form.addEventListener('submit', function (ev) {
       ev.preventDefault();
@@ -590,8 +602,6 @@
         subtitle: c.value.trim() || DEFAULT_DATA.site.subtitle,
         announcement: e.value.trim()
       };
-      state.groups[0].name = g1.value.trim() || DEFAULT_DATA.groups[0].name;
-      state.groups[1].name = g2.value.trim() || DEFAULT_DATA.groups[1].name;
       changed();
       d.close();
     });
@@ -611,6 +621,163 @@
         else { document.execCommand('copy'); done(); }
       }
     })]);
+  }
+
+  /* ---------- login (akun LAPORAN CERMAT) ---------- */
+
+  var TOKEN_KEY = 'cermat_token', USER_KEY = 'cermat_user', LAPORAN = '../laporanCermat/';
+  var PERAN = { admin: 'Admin', fasilitator: 'Fasilitator', pemantau: 'Pemantau', kepsek: 'Kepala Sekolah', guru: 'Guru' };
+  var me = null;
+
+  function apiUrl() { return ((window.CERMAT_CONFIG || {}).API_URL || '').trim(); }
+  function getTok() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+
+  function api(action, payload) {
+    var url = apiUrl();
+    if (!/^https:\/\//.test(url)) return Promise.reject(new Error('Alamat server belum terbaca. Periksa koneksi, lalu muat ulang.'));
+    var body = JSON.stringify(Object.assign({ action: action, token: getTok() }, payload || {}));
+    return fetch(url, { method: 'POST', body: body, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow' })
+      .catch(function () { var e = new Error('Tidak bisa terhubung ke server. Periksa koneksi internet.'); e.offline = true; throw e; })
+      .then(function (r) { return r.json().catch(function () { var e = new Error('Jawaban server tidak terbaca.'); e.offline = !r.ok; throw e; }); })
+      .then(function (j) {
+        if (!j.ok) { var e = new Error(j.error || 'Terjadi kesalahan di server.'); e.code = j.code; throw e; }
+        return j.data;
+      });
+  }
+
+  /* data pengguna disimpan bersama penanda token, supaya tidak tertukar bila token berganti */
+  function cachedMe() {
+    var t = getTok(); if (!t) return null;
+    try { var u = JSON.parse(localStorage.getItem(USER_KEY) || 'null'); return u && u._t === t.slice(-16) ? u : null; } catch (e) { return null; }
+  }
+  function storeMe(u) {
+    me = u;
+    try { var c = Object.assign({}, u, { _t: getTok().slice(-16) }); localStorage.setItem(USER_KEY, JSON.stringify(c)); } catch (e) { /* abaikan */ }
+  }
+  function clearSession() {
+    me = null;
+    try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); } catch (e) { /* abaikan */ }
+  }
+
+  function canSee(l) {
+    if (!me) return false;
+    if (me.peran === 'kepsek') return l.ks === true;
+    if (me.peran === 'guru') return l.guru === true;
+    return true;   // admin, fasilitator, pemantau
+  }
+
+  function laporanCard(title, desc, hash) {
+    return h('a', { class: 'card', href: LAPORAN + (hash || '') }, [
+      h('div', { class: 'chipicon' }, [ic('laporan', 22)]),
+      h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: title }), h('div', { class: 'meta' }, [h('span', { text: desc })])]),
+      h('div', { class: 'go' }, [ic('arrow', 16, 2)])
+    ]);
+  }
+
+  function pwInput(attrs) {
+    var inp = h('input', Object.assign({ type: 'password' }, attrs));
+    var eye = h('button', { type: 'button', class: 'eye', title: 'Lihat password', 'aria-label': 'Lihat password' }, [ic('eye', 20, 1.9)]);
+    eye.addEventListener('click', function () {
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      eye.textContent = ''; eye.appendChild(ic(show ? 'eyeoff' : 'eye', 20, 1.9));
+      eye.title = show ? 'Sembunyikan password' : 'Lihat password'; eye.setAttribute('aria-label', eye.title);
+      inp.focus();
+    });
+    return { input: inp, el: h('div', { class: 'pwf' }, [inp, eye]) };
+  }
+
+  function renderAuth() {
+    var a = $('auth'), ub = $('userbar'), logged = !!me;
+    document.body.classList.toggle('need-login', !logged);
+    ['label', 'list', 'addwrap'].forEach(function (id) { var el = id === 'label' ? document.querySelector('.label') : $(id); if (el) el.hidden = !logged; });
+    $('adminlink').hidden = !(logged && me.peran === 'admin') || admin;
+    if (logged) {
+      a.hidden = true; a.textContent = '';
+      ub.textContent = '';
+      ub.appendChild(h('div', { class: 'who' }, [ic('user', 18, 2), h('span', {}, [h('b', { text: String(me.nama || me.username).split(',')[0] }), ' · ' + (PERAN[me.peran] || me.peran)])]));
+      ub.appendChild(h('button', { type: 'button', class: 'btn ghost sm', onclick: logout }, [ic('logout', 16, 2), h('span', { text: 'Keluar' })]));
+      ub.hidden = false;
+      return;
+    }
+    ub.hidden = true; ub.textContent = '';
+    if (a.dataset.on === '1' && !a.hidden) return;   // form login sudah tampil
+    a.dataset.on = '1'; a.hidden = false; a.textContent = '';
+    var inU = h('input', { type: 'text', autocomplete: 'username', autocapitalize: 'none', spellcheck: 'false', required: true });
+    var pw = pwInput({ autocomplete: 'current-password', required: true });
+    var err = errBox();
+    var go = btn('Masuk', 'pri', { type: 'submit' });
+    var form = h('form', { class: 'login', novalidate: true }, [
+      h('h2', { text: 'Masuk' }),
+      h('p', { class: 'dnote', text: 'Gunakan akun yang diberikan admin program (akun yang sama dengan LAPORAN CERMAT).' }),
+      field('Username', inU), field('Password', pw.el), err, go,
+      h('p', { class: 'fh', text: 'Lupa password? Hubungi admin program.' })
+    ]);
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var u = inU.value.trim(), p = pw.input.value;
+      if (!u || !p) { showErr(err, 'Isi username dan password.'); return; }
+      showErr(err, ''); go.disabled = true; go.textContent = 'Memeriksa...';
+      api('login', { username: u, password: p }).then(function (r) {
+        try { localStorage.setItem(TOKEN_KEY, r.token); } catch (e) { /* abaikan */ }
+        storeMe(r.user);
+        a.dataset.on = '';
+        renderAll();
+        window.scrollTo(0, 0);
+      }).catch(function (e) {
+        go.disabled = false; go.textContent = 'Masuk';
+        showErr(err, e.message);
+      });
+    });
+    a.appendChild(form);
+    setTimeout(function () { inU.focus(); }, 50);
+  }
+
+  /* perubahan LAPORAN CERMAT di perangkat ini yang belum terkirim (jangan sampai hilang saat keluar) */
+  function laporanPending() {
+    return new Promise(function (resolve) {
+      if (!window.indexedDB) return resolve(0);
+      var req;
+      try { req = indexedDB.open('laporan-cermat-v2'); } catch (e) { return resolve(0); }
+      req.onupgradeneeded = function () { try { req.transaction.abort(); } catch (e) { /* abaikan */ } };
+      req.onerror = function () { resolve(0); };
+      req.onsuccess = function () {
+        var db = req.result, n = 0;
+        try {
+          var names = ['pending', 'reports'].filter(function (x) { return db.objectStoreNames.contains(x); });
+          if (!names.length) { db.close(); return resolve(0); }
+          var tx = db.transaction(names, 'readonly');
+          names.forEach(function (x) {
+            var c = tx.objectStore(x).openCursor();
+            c.onsuccess = function () { var cur = c.result; if (!cur) return; if (x === 'pending' || (cur.value && cur.value._dirty)) n++; cur.continue(); };
+          });
+          tx.oncomplete = function () { db.close(); resolve(n); };
+          tx.onerror = function () { db.close(); resolve(n); };
+        } catch (e) { db.close(); resolve(0); }
+      };
+    });
+  }
+
+  function logout() {
+    laporanPending().then(function (n) {
+      if (n && !window.confirm('Masih ada ' + n + ' perubahan LAPORAN CERMAT di perangkat ini yang belum terkirim. Buka LAPORAN CERMAT dulu supaya tersimpan. Tetap keluar?')) return;
+      if (admin && dirty && !window.confirm('Ada perubahan daftar folder yang belum disimpan. Keluar dan buang perubahan?')) return;
+      api('logout').catch(function () { /* abaikan */ });
+      clearSession();
+      if (admin) { admin = false; dirty = false; token = ''; fileSha = null; }
+      clearCred();
+      renderAll();
+      window.scrollTo(0, 0);
+    });
+  }
+
+  /* periksa sesi ke server; peran bisa berubah, sesi bisa kedaluwarsa */
+  function verifySession() {
+    if (!getTok()) return Promise.resolve();
+    return api('me').then(function (u) { storeMe(u); renderAll(); }).catch(function (e) {
+      if (e.code === 'AUTH') { clearSession(); renderAll(); toast('Sesi berakhir. Silakan masuk lagi.', true); }
+      else if (!me) toast(e.message, true);
+    });
   }
 
   /* ---------- mode admin ---------- */
@@ -653,11 +820,12 @@
     token = '';
     fileSha = null;
     clearCred();
-    $('adminlink').hidden = false;
+    $('adminlink').hidden = !(me && me.peran === 'admin');
     loadPublic();
   }
 
   function adminEntry() {
+    if (!me || me.peran !== 'admin') return;
     var c = readCred();
     if (!c) { loginDialog(); return; }
     repo = c.repo; token = c.token;
@@ -680,8 +848,12 @@
 
   function start() {
     $('adminlink').addEventListener('click', adminEntry);
-    window.addEventListener('hashchange', function () { readHash(); renderAll(); });
-    loadPublic().then(function () { readHash(); renderAll(); });
+    me = cachedMe();
+    loadPublic().then(function () { verifySession(); });
+    window.addEventListener('storage', function (e) {   // login/keluar dari LAPORAN CERMAT di tab lain
+      if (e.key !== TOKEN_KEY) return;
+      me = cachedMe(); renderAll(); if (getTok() && !me) verifySession();
+    });
   }
 
   if (typeof document !== 'undefined' && document.getElementById('list')) {

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
-  <link rel="stylesheet" href="assets/style.css?v=4">
+  <link rel="stylesheet" href="assets/style.css?v=5">
 </head>
 <body>
   <div class="hero"><div class="gutter">
@@ -40,6 +40,8 @@
     </header>
 
     <div class="notice" id="notice" role="status" hidden></div>
+    <div class="userbar" id="userbar" hidden></div>
+    <div class="authbox" id="auth" hidden></div>
 
     <div class="label">Folder Utama</div>
     <div id="list" aria-live="polite">
@@ -52,14 +54,15 @@
       <span class="fb">CERMAT</span>
       <span>Cerdas Numerasi dan Matematika Terapan</span>
       <span>Tautan terbuka di tab baru dan mengikuti izin akses Google Drive Anda.</span>
-      <button type="button" class="adminlink" id="adminlink">Admin</button>
+      <button type="button" class="adminlink" id="adminlink" hidden>Admin</button>
     </footer>
   </main>
 
   <div id="adminbar" class="adminbar" hidden></div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script src="assets/app.js?v=5"></script>
+  <script src="../laporanCermat/js/config.js"></script>
+  <script src="assets/app.js?v=6"></script>
   <script>
     /* Aplikasi terpasang (PWA): simpan tampilan untuk dibuka saat sinyal lemah. */
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
