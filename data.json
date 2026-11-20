@@ -38,6 +38,15 @@
           "hidden": false
         },
         {
+          "title": "Laporan Fasil",
+          "desc": "Laporan kegiatan",
+          "url": "https://pusatbelajargurukudus.github.io/laporanCermat",
+          "icon": "laporan",
+          "access": "publik",
+          "primary": true,
+          "hidden": false
+        },
+        {
           "title": "Upload Foto",
           "desc": "Unggah foto kegiatan",
           "url": "",
@@ -45,15 +54,6 @@
           "access": "publik",
           "primary": false,
           "hidden": true
-        },
-        {
-          "title": "Laporan Fasil",
-          "desc": "Laporan kegiatan",
-          "url": "https://pusatbelajargurukudus.github.io/laporanCermat",
-          "icon": "laporan",
-          "access": "publik",
-          "primary": false,
-          "hidden": false
         }
       ]
     },
