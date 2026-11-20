@@ -31,10 +31,10 @@
         {
           "title": "Lembar Kerja",
           "desc": "Lembar kerja peserta",
-          "url": "",
+          "url": "https://drive.google.com/drive/folders/1YfrrexkkEgKLrUrDdw0PE4jfDUJ--y2R?usp=share_link",
           "icon": "template",
           "access": "publik",
-          "primary": false,
+          "primary": true,
           "hidden": false
         },
         {
