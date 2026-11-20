@@ -11,13 +11,26 @@
       "name": "Fasilitator",
       "links": [
         {
-          "title": "Silabus dan Modul",
-          "desc": "Silabus dan modul pembelajaran",
-          "url": "https://drive.google.com/drive/folders/14WA50r6h1ee3oD1baPaa7wLWPdu_7bdw?usp=share_link",
+          "title": "Silabus",
+          "desc": "Silabus Pendampingan",
+          "url": "https://drive.google.com/drive/folders/1dhQQWglf3m3IrpHGM-rDO6YZvTUWAtkg?usp=share_link",
           "icon": "materi",
           "access": "publik",
           "primary": true,
-          "hidden": false
+          "hidden": false,
+          "ks": false,
+          "guru": false
+        },
+        {
+          "title": "Modul",
+          "desc": "Modul Pendampingan",
+          "url": "https://drive.google.com/drive/folders/14WA50r6h1ee3oD1baPaa7wLWPdu_7bdw?usp=share_link",
+          "icon": "folder",
+          "access": "publik",
+          "primary": false,
+          "hidden": false,
+          "ks": true,
+          "guru": true
         },
         {
           "title": "Bahan Tayang",
@@ -26,7 +39,9 @@
           "icon": "tayang",
           "access": "publik",
           "primary": true,
-          "hidden": false
+          "hidden": false,
+          "ks": false,
+          "guru": false
         },
         {
           "title": "Lembar Kerja",
@@ -35,7 +50,9 @@
           "icon": "template",
           "access": "publik",
           "primary": true,
-          "hidden": false
+          "hidden": false,
+          "ks": false,
+          "guru": false
         },
         {
           "title": "Laporan Fasil",
@@ -44,7 +61,9 @@
           "icon": "laporan",
           "access": "publik",
           "primary": true,
-          "hidden": false
+          "hidden": false,
+          "ks": true,
+          "guru": false
         },
         {
           "title": "Upload Foto",
@@ -53,7 +72,9 @@
           "icon": "foto",
           "access": "publik",
           "primary": false,
-          "hidden": true
+          "hidden": true,
+          "ks": false,
+          "guru": false
         }
       ]
     },
@@ -68,7 +89,9 @@
           "icon": "materi",
           "access": "publik",
           "primary": false,
-          "hidden": false
+          "hidden": false,
+          "ks": false,
+          "guru": false
         },
         {
           "title": "Lembar Kerja",
@@ -77,7 +100,9 @@
           "icon": "template",
           "access": "publik",
           "primary": false,
-          "hidden": false
+          "hidden": false,
+          "ks": false,
+          "guru": false
         },
         {
           "title": "Unggah Foto Kegiatan",
@@ -86,7 +111,9 @@
           "icon": "foto",
           "access": "publik",
           "primary": false,
-          "hidden": false
+          "hidden": false,
+          "ks": false,
+          "guru": false
         }
       ]
     }
