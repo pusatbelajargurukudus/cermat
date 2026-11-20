@@ -22,10 +22,10 @@
         {
           "title": "Bahan Tayang",
           "desc": "Slide dan bahan presentasi",
-          "url": "",
+          "url": "https://drive.google.com/drive/folders/10UEGF6yjkKXPtsm_6GtaCD3tNGprtJmp?usp=share_link",
           "icon": "tayang",
           "access": "publik",
-          "primary": false,
+          "primary": true,
           "hidden": false
         },
         {
