@@ -44,14 +44,14 @@
           "icon": "foto",
           "access": "publik",
           "primary": false,
-          "hidden": false
+          "hidden": true
         },
         {
           "title": "Laporan Fasil",
           "desc": "Laporan kegiatan",
-          "url": "",
+          "url": "https://pusatbelajargurukudus.github.io/laporanCermat",
           "icon": "laporan",
-          "access": "terbatas",
+          "access": "publik",
           "primary": false,
           "hidden": false
         }
