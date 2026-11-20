@@ -666,12 +666,9 @@
     return true;   // admin, fasilitator, pemantau
   }
 
+  /* tombol besar (gaya sama dengan kartu "tombol utama" di daftar folder) */
   function laporanCard(title, desc, hash) {
-    return h('a', { class: 'card', href: LAPORAN + (hash || '') }, [
-      h('div', { class: 'chipicon' }, [ic('laporan', 22)]),
-      h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: title }), h('div', { class: 'meta' }, [h('span', { text: desc })])]),
-      h('div', { class: 'go' }, [ic('arrow', 16, 2)])
-    ]);
+    return h('a', { class: 'card primary', href: LAPORAN + (hash || ''), title: desc }, [ic('laporan', 22, 2), h('span', { class: 'ttl', text: title })]);
   }
 
   function pwInput(attrs) {
