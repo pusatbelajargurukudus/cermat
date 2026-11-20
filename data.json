@@ -75,6 +75,17 @@
           "hidden": true,
           "ks": false,
           "guru": false
+        },
+        {
+          "title": "PETUNJUK PENGGUNA",
+          "desc": "Petunjuk instalasi dan penggunaan",
+          "url": "",
+          "icon": "laporan",
+          "access": "publik",
+          "primary": false,
+          "hidden": false,
+          "ks": true,
+          "guru": true
         }
       ]
     },
