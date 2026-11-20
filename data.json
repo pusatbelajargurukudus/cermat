@@ -62,7 +62,7 @@
           "access": "publik",
           "primary": true,
           "hidden": false,
-          "ks": false,
+          "ks": true,
           "guru": false
         },
         {
