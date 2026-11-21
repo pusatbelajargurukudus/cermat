@@ -264,6 +264,31 @@ a.card:hover .go { color: var(--ink); }
   line-height: 1.6;
 }
 
+/* ---------- Pretes & Postes ---------- */
+.tesview { display: flex; flex-direction: column; gap: 16px; }
+.teshead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.spacer { flex: 1; }
+.tesgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.card.tes { flex-direction: column; align-items: stretch; gap: 14px; }
+.card.tes.empty { border-width: 2px; }
+.teshd { display: flex; align-items: center; gap: 14px; }
+.tesno { flex: none; width: 46px; height: 46px; border-radius: 14px; background: var(--navy); color: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+.teshd .meta { display: block; }
+.tesbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tesbtns .btn { width: 100%; text-decoration: none; padding: 0 10px; text-align: center; }
+.btn.lockd { background: var(--bg); color: var(--muted); border-style: dashed; cursor: not-allowed; font-weight: 600; font-size: 13px; }
+.tesnote { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.tesnote.ok { color: #1E6B3E; font-weight: 600; }
+.tesrows { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.tesrow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.tesrow + .tesrow { border-top: 1px solid var(--line); }
+.tesrow b { min-width: 58px; color: var(--ink); font-size: 14px; }
+.tesrow .ib { text-decoration: none; }
+.tessk { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-ink); }
+.tag.open { background: #E3F4E8; color: #1E6B3E; }
+@media (prefers-color-scheme: dark) { .tag.open { background: #12391F; color: #BDEBCB; } .tesnote.ok { color: #9FE0B4; } }
+@media (max-width: 719px) { .tesgrid { grid-template-columns: 1fr; } .tesrow { flex-wrap: wrap; } }
+
 /* ---------- Panel Admin ---------- */
 #addwrap:empty { display: none; }
 #addwrap .label { margin-top: 12px; }
@@ -505,3 +530,5 @@ body.need-login .label, body.need-login #list, body.need-login #addwrap { displa
   a.card:hover { transform: none; }
   .skel { animation: none; }
 }
+
+a.btn { text-decoration: none; }

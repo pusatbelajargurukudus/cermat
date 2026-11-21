@@ -7,10 +7,10 @@
  *   (juga offline) dan diperbarui diam-diam saat ada sinyal. PDF petunjuk tidak disimpan otomatis.
  * Naikkan CACHE bila index.html, assets/style.css, assets/app.js, atau fonts/ diubah.
  * Naikkan PANDUAN bila isi folder panduan/ diganti. */
-const CACHE = 'cermat-pustaka-v9';
-const PANDUAN = 'cermat-panduan-v1';
+const CACHE = 'cermat-pustaka-v10';
+const PANDUAN = 'cermat-panduan-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'data.json',
-  'assets/style.css?v=9', 'assets/app.js?v=11', 'assets/logo.png', 'fonts/fonts.css?v=1',
+  'assets/style.css?v=10', 'assets/app.js?v=12', 'assets/logo.png', 'fonts/fonts.css?v=1',
   'fonts/jakarta-400.woff2', 'fonts/jakarta-500.woff2', 'fonts/jakarta-600.woff2', 'fonts/jakarta-700.woff2', 'fonts/jakarta-800.woff2',
   'fonts/cormorant-600.woff2', 'fonts/cormorant-500i.woff2', 'fonts/cormorant-600i.woff2',
   'assets/logo-pbg.png', 'assets/logo-kemenag.png', 'assets/logo-disdikpora.png', 'assets/logo-djarum.png',
