@@ -39,7 +39,12 @@
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.6a6.5 6.5 0 0 1 3.5 5.4"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
-    chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>'
+    chart: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+    download: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>',
+    close: '<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
+    external: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
+    pdf: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h5"/>',
+    offline: '<path d="M7 18a4.5 4.5 0 1 1 .9-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/><path d="M9.5 13.5l2 2 3.5-3.5"/>'
   };
   var ICON_NAMES = ['folder', 'materi', 'soal', 'foto', 'laporan', 'template', 'tayang', 'unggah', 'link'];
   var ICON_LABEL = {
@@ -231,6 +236,8 @@
       h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: l.title }), meta.length ? h('div', { class: 'meta' }, meta) : null])
     ];
     if (ok) kids.push(h('div', { class: 'go' }, [ic('arrow', 18, 2)]));
+    var fid = ok && me ? driveFolderId(l.url) : '';
+    if (fid) { MAT_JUDUL[fid] = l.title; return h('a', { class: cls, href: '#/materi/' + fid }, kids); }   // daftar file tampil di dalam CERMAT
     if (ok) {
       // tautan ke situs ini sendiri (mis. LAPORAN CERMAT) dibuka di jendela yang sama agar tetap di dalam aplikasi
       var same = false;
@@ -709,15 +716,275 @@
 
   function onTes() { return !!me && !admin && location.hash === '#/tes'; }
 
+  /* =========================================================
+   * MATERI (#/materi/<folderId>) — isi folder Drive kartu Modul, Lembar Kerja, Bahan Tayang
+   * tampil di dalam CERMAT. Guru & kepsek hanya bisa membuka materi pendampingan yang sudah
+   * ditampilkan fasilitator. PDF bisa disimpan di perangkat untuk dibaca tanpa internet.
+   * ========================================================= */
+  var MAT_JUDUL = {}, MAT = { fid: '', data: null, err: '', busy: false, sid: '', offline: false };
+  var OFF_CACHE = 'cermat-materi', OFF_IDX = 'cermat_materi_offline';
+  function onMateri() { return !!me && !admin && /^#\/materi\/[A-Za-z0-9_-]{10,}$/.test(location.hash); }
+  function driveFolderId(u) { var m = String(u || '').match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([A-Za-z0-9_-]{10,})/); return m ? m[1] : ''; }
+  function staf() { return me && (me.peran === 'admin' || me.peran === 'fasilitator' || me.peran === 'pemantau'); }
+  function offIdx() { try { return JSON.parse(localStorage.getItem(OFF_IDX) || '{}'); } catch (e) { return {}; } }
+  function offSet(id, v) { var x = offIdx(); if (v) x[id] = v; else delete x[id]; try { localStorage.setItem(OFF_IDX, JSON.stringify(x)); } catch (e) { /* penuh */ } }
+  function offKey(id) { return new URL('__materi_offline/' + id + '.pdf', location.href).href; }
+
+  function bukaMateri(fid) {
+    if (MAT.fid !== fid) { MAT = { fid: fid, data: null, err: '', busy: false, sid: MAT.sid, offline: false }; }
+    renderMateri();
+    if (!MAT.data && !MAT.busy) muatMateri(false);
+  }
+  function muatMateri(segar) {
+    var fid = MAT.fid;
+    MAT.busy = true; MAT.err = ''; renderMateri();
+    api('materiList', { folderId: fid, segar: !!segar }).then(function (d) {
+      if (MAT.fid !== fid) return;
+      MAT.data = d; MAT.offline = false;
+      try { localStorage.setItem('cermat_materi_' + fid, JSON.stringify(d)); } catch (e) { /* penuh */ }
+    }).catch(function (e) {
+      if (MAT.fid !== fid) return;
+      var simpan = null;
+      try { simpan = JSON.parse(localStorage.getItem('cermat_materi_' + fid) || 'null'); } catch (x) { simpan = null; }
+      if (e.offline && simpan) { MAT.data = simpan; MAT.offline = true; }
+      else MAT.err = e.message;
+      if (e.code === 'AUTH') { clearSession(); renderAll(); }
+    }).then(function () { if (MAT.fid === fid) { MAT.busy = false; if (onMateri()) renderMateri(); } });
+  }
+
+  var FASE_P = [[1, 7], [8, 16], [17, 22]];
+  function grupMateri(files) {
+    var g = {};
+    files.forEach(function (f) {
+      var k = f.dari === null || f.dari === undefined ? 'u' : (f.dari === f.sampai ? 'p' : 'r') + ('0' + f.dari).slice(-2) + '-' + ('0' + f.sampai).slice(-2);
+      (g[k] = g[k] || { key: k, dari: f.dari, sampai: f.sampai, files: [] }).files.push(f);
+    });
+    return Object.keys(g).sort(function (a, b) {
+      if (a === 'u') return 1; if (b === 'u') return -1;
+      return (g[a].dari - g[b].dari) || (g[a].sampai - g[b].sampai);
+    }).map(function (k) { return g[k]; });
+  }
+  function judulGrup(gr, satu) {
+    if (gr.key === 'u') return satu ? 'Semua file' : 'Umum';
+    if (gr.dari === gr.sampai) return 'P' + gr.dari + ' · ' + (TES_JUDUL[gr.dari - 1] || '');
+    var f = FASE_P.map(function (x) { return x[0] === gr.dari && x[1] === gr.sampai; }).indexOf(true);
+    return 'P' + gr.dari + '–P' + gr.sampai + (f >= 0 ? ' · Fase ' + (f + 1) : '');
+  }
+  function grupTerbuka(gr, nos) {
+    if (gr.key === 'u') return true;
+    for (var n = gr.dari; n <= gr.sampai; n++) if (nos.indexOf(n) >= 0) return true;
+    return false;
+  }
+  var MIME = {
+    'application/pdf': ['PDF', 'pdf'], 'application/vnd.google-apps.presentation': ['Google Slides', 'tayang'], 'application/vnd.google-apps.document': ['Google Docs', 'template'],
+    'application/vnd.google-apps.spreadsheet': ['Google Sheets', 'chart'],
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['PowerPoint', 'tayang'], 'application/vnd.ms-powerpoint': ['PowerPoint', 'tayang'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['Word', 'template'], 'application/msword': ['Word', 'template'],
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['Excel', 'chart']
+  };
+  function jenisFile(f) { var m = MIME[f.mime]; if (m) return m; if (/^image\//.test(f.mime)) return ['Gambar', 'foto']; if (/^video\//.test(f.mime)) return ['Video', 'tayang']; return ['File', 'folder']; }
+  function ukuranTeks(b) { b = Number(b) || 0; if (!b) return ''; return b >= 1048576 ? (b / 1048576).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
+  function namaTampil(n) { return String(n || '').replace(/\.(pdf|docx?|pptx?|xlsx?)$/i, ''); }
+  function unduhUrl(f) {
+    if (f.mime === 'application/vnd.google-apps.presentation') return 'https://docs.google.com/presentation/d/' + f.id + '/export/pptx';
+    if (f.mime === 'application/vnd.google-apps.document') return 'https://docs.google.com/document/d/' + f.id + '/export?format=docx';
+    if (f.mime === 'application/vnd.google-apps.spreadsheet') return 'https://docs.google.com/spreadsheets/d/' + f.id + '/export?format=xlsx';
+    return 'https://drive.google.com/uc?export=download&id=' + f.id;
+  }
+
+  function renderMateri() {
+    var tv = $('tesview'); if (!tv || !me) return;
+    var d = MAT.data, peran = me.peran, peserta = peran === 'guru' || peran === 'kepsek';
+    tv.textContent = '';
+    tv.appendChild(h('div', { class: 'teshead' }, [
+      h('a', { class: 'btn ghost sm', href: '#/' }, [ic('back', 16, 2.2), h('span', { text: 'Folder utama' })]),
+      h('span', { class: 'spacer' }),
+      btn(MAT.busy ? 'Memuat…' : 'Muat ulang', 'ghost sm', { disabled: MAT.busy, onclick: function () { muatMateri(staf()); } })
+    ]));
+    var judul = (d && d.kartu) || MAT_JUDUL[MAT.fid] || 'Materi';
+    var sub = peserta ? 'Ketuk file untuk membukanya. Materi pendampingan terbuka setelah ditampilkan fasilitator.'
+      : peran === 'fasilitator' ? 'Ketuk file untuk membukanya. Tampilkan materi setiap pendampingan untuk guru dan kepala sekolah sekolah binaan Anda; materi juga tampil otomatis saat pretes diaktifkan.'
+      : 'Ketuk file untuk membukanya. Status menunjukkan materi yang sudah ditampilkan untuk sekolah terpilih.';
+    tv.appendChild(h('div', { class: 'label' }, [h('h2', { text: judul }), h('p', { class: 'sub', text: sub })]));
+    if (MAT.err) { tv.appendChild(h('div', { class: 'empty-note', text: MAT.err })); return; }
+    if (!d) { for (var i = 0; i < 3; i++) tv.appendChild(h('div', { class: 'skel' })); return; }
+    if (MAT.offline) tv.appendChild(h('div', { class: 'notice mnote' }, [h('strong', { text: 'Tanpa internet' }), h('span', { text: 'Daftar dari penyimpanan perangkat. Hanya file bertanda "Tersimpan" yang bisa dibuka.' })]));
+    var sks = d.sekolah || [];
+    if (!MAT.sid || !sks.some(function (x) { return x.id === MAT.sid; })) MAT.sid = sks.length ? sks[0].id : '';
+    if (staf() && sks.length > 1) {
+      var sel = h('select', { class: 'msel', 'aria-label': 'Sekolah' }, sks.map(function (x) { return h('option', { value: x.id, text: x.nama, selected: x.id === MAT.sid }); }));
+      sel.addEventListener('change', function () { MAT.sid = sel.value; renderMateri(); });
+      tv.appendChild(h('label', { class: 'mselw' }, [h('span', { text: 'Status untuk sekolah' }), sel]));
+    }
+    var sk = sks.filter(function (x) { return x.id === MAT.sid; })[0];
+    var nos = ((d.buka || {})[MAT.sid]) || [];
+    var bisaAtur = (peran === 'fasilitator' || peran === 'admin') && !!sk && !MAT.offline;
+    var grup = grupMateri(d.files || []);
+    if (!grup.length) { tv.appendChild(h('div', { class: 'empty-note', text: 'Folder ini masih kosong.' })); return; }
+    var off = offIdx();
+    grup.forEach(function (gr) {
+      var terbuka = grupTerbuka(gr, nos), satuP = gr.key.charAt(0) === 'p';
+      var kepala = [h('div', { class: 'mgt' }, [h('b', { text: judulGrup(gr, grup.length === 1) }), h('span', { text: gr.files.length + ' file' })])];
+      var status = null, aksi = null;
+      if (gr.key === 'u') status = grup.length > 1 ? tag('pub', null, 'Selalu terbuka') : null;
+      else if (peserta) status = terbuka ? null : tag('hid', 'lock', 'Terkunci');
+      else if (sk) {
+        status = terbuka ? tag('open', 'check', satuP ? 'Tampil untuk guru' : 'Terbuka untuk guru') : tag('hid', 'lock', satuP ? 'Terkunci untuk guru' : 'Terbuka setelah P' + gr.dari + '–P' + gr.sampai + ' ditampilkan');
+        if (bisaAtur && satuP) aksi = btn(MAT.act === gr.dari ? '…' : (terbuka ? 'Sembunyikan' : 'Tampilkan'), terbuka ? 'ghost sm' : 'pri sm', { disabled: !!MAT.act, onclick: function () { aturMateri(sk, gr.dari, !terbuka); } });
+      }
+      kepala.push(h('div', { class: 'mgs' }, [status, aksi]));
+      var rows = gr.files.map(function (f) {
+        var j = jenisFile(f), kunci = !!f.kunci || !f.id, ofl = off[f.id];
+        var meta = [j[0], ukuranTeks(f.ukuran), f.folder && f.folder.indexOf(' / ') > 0 ? f.folder.split(' / ').slice(1).join(' / ') : ''].filter(Boolean).join(' · ');
+        var kids = [h('span', { class: 'mfi' }, [ic(j[1], 20, 1.8)]), h('span', { class: 'mft' }, [h('b', { text: namaTampil(f.nama) }), h('span', { text: meta })]),
+          ofl ? h('span', { class: 'tag open moff' }, [ic('offline', 12, 2), 'Tersimpan']) : null];
+        if (kunci) return h('div', { class: 'mfile lock', 'aria-disabled': 'true' }, kids.concat([ic('lock', 16, 2)]));
+        var b = h('button', { type: 'button', class: 'mfile', onclick: function () { lihatFile(f); } }, kids);
+        if (peran === 'admin' && gr.key.charAt(0) !== 'p' && !MAT.offline) {
+          return h('div', { class: 'mrow' }, [b, h('button', { type: 'button', class: 'mrng', title: 'Atur rentang pendampingan file ini', onclick: function () { rentangDialog(f); } }, [h('span', { text: f.dari ? 'P' + f.dari + (f.sampai !== f.dari ? '–P' + f.sampai : '') : 'Rentang' })])]);
+        }
+        return b;
+      });
+      var body = [h('div', { class: 'mgh' }, kepala)];
+      if (peserta && !terbuka) body.push(h('p', { class: 'tesnote', text: 'Dibuka fasilitator saat pendampingan.' }));
+      body.push(h('div', { class: 'mfiles' }, rows));
+      tv.appendChild(h('div', { class: 'card mgrp' + (peserta && !terbuka ? ' empty' : '') }, body));
+    });
+  }
+  function aturMateri(sk, no, tampil) {
+    MAT.act = no; renderMateri();
+    api('materiSet', { sekolahId: sk.id, no: no, tampil: tampil }).then(function (r) {
+      MAT.data.buka = Object.assign({}, MAT.data.buka || {}, r.buka);
+      if (!r.buka[sk.id]) MAT.data.buka[sk.id] = [];
+      toast('Materi P' + no + (tampil ? ' ditampilkan untuk guru & kepala sekolah ' : ' disembunyikan dari ') + sk.nama + '.');
+    }).catch(function (e) { toast(e.message, true); }).then(function () { MAT.act = 0; renderMateri(); });
+  }
+  function rentangDialog(f) {
+    var opsi = function (v) { return [h('option', { value: '', text: '—' })].concat(TES_JUDUL.map(function (t, i) { return h('option', { value: String(i + 1), text: 'P' + (i + 1), selected: Number(v) === i + 1 }); })); };
+    var a = h('select', {}, opsi(f.dari)), b = h('select', {}, opsi(f.sampai)), err = errBox();
+    var simpan = btn('Simpan', 'pri', { onclick: function () {
+      var x = a.value ? Number(a.value) : '', y = b.value ? Number(b.value) : x;
+      if (x !== '' && y < x) { showErr(err, 'P akhir tidak boleh sebelum P awal.'); return; }
+      simpan.disabled = true;
+      api('materiPeta', x === '' ? { fileId: f.id, hapus: true } : { fileId: f.id, dari: x, sampai: y }).then(function () { dd.close(); toast('Rentang disimpan.'); muatMateri(true); })
+        .catch(function (e) { showErr(err, e.message); simpan.disabled = false; });
+    } });
+    var dd = openDialog('Rentang pendampingan', [
+      h('p', { class: 'dnote', text: '“' + namaTampil(f.nama) + '” terbuka untuk guru dan kepala sekolah begitu salah satu pendampingan di rentang ini ditampilkan fasilitator. Kosongkan agar selalu terbuka.' }),
+      h('div', { class: 'mrgrid' }, [field('Dari', a), field('Sampai', b)]), err], [btn('Batal', 'ghost', { onclick: function () { dd.close(); } }), simpan]);
+    dd.form.addEventListener('submit', function (ev) { ev.preventDefault(); });
+  }
+
+  /* ---------- penampil file ---------- */
+  function lihatFile(f) {
+    var adaOff = !!offIdx()[f.id], pdf = f.mime === 'application/pdf';
+    var wrap = h('div', { class: 'mview', role: 'dialog', 'aria-modal': 'true', 'aria-label': namaTampil(f.nama) });
+    var body = h('div', { class: 'mvb' });
+    var tutup = function () { if (wrap.parentNode) { wrap.parentNode.removeChild(wrap); document.body.classList.remove('noscroll'); window.removeEventListener('popstate', onPop); document.removeEventListener('keydown', onKey); } };
+    var onPop = function () { tutup(); };
+    var onKey = function (ev) { if (ev.key === 'Escape') history.back(); };
+    var offBtn = null;
+    if (pdf && !MAT.offline) {
+      offBtn = btn(adaOff ? 'Tersimpan' : 'Simpan offline', 'ghost sm moffbtn', { title: adaOff ? 'Hapus dari perangkat' : 'Simpan untuk dibaca tanpa internet', onclick: function () {
+        if (offIdx()[f.id]) { hapusOffline(f).then(function () { offBtn.lastChild.textContent = 'Simpan offline'; toast('File dihapus dari perangkat.'); renderMateri(); }); return; }
+        simpanOffline(f, offBtn).then(function () { offBtn.lastChild.textContent = 'Tersimpan'; renderMateri(); }).catch(function (e) { offBtn.lastChild.textContent = 'Simpan offline'; offBtn.disabled = false; toast(e.message, true); });
+      } });
+      offBtn.insertBefore(ic('offline', 16, 2), offBtn.firstChild);
+      offBtn.lastChild && (offBtn.lastChild.nodeType === 3) && (offBtn.replaceChild(h('span', { text: offBtn.lastChild.textContent }), offBtn.lastChild));
+    }
+    var bar = h('div', { class: 'mvh' }, [
+      h('button', { type: 'button', class: 'ib', 'aria-label': 'Tutup', title: 'Tutup', onclick: function () { history.back(); } }, [ic('close', 20, 2)]),
+      h('div', { class: 'mvt' }, [h('b', { text: namaTampil(f.nama) }), h('span', { text: [jenisFile(f)[0], ukuranTeks(f.ukuran)].filter(Boolean).join(' · ') })]),
+      h('div', { class: 'mva' }, [
+        offBtn,
+        MAT.offline ? null : h('a', { class: 'btn ghost sm', href: unduhUrl(f), target: '_blank', rel: 'noopener' }, [ic('download', 16, 2), h('span', { text: 'Unduh' })]),
+        staf() && !MAT.offline ? h('a', { class: 'btn ghost sm', href: 'https://drive.google.com/file/d/' + f.id + '/view', target: '_blank', rel: 'noopener', title: 'Buka di Google Drive' }, [ic('external', 16, 2), h('span', { text: 'Drive' })]) : null
+      ])
+    ]);
+    wrap.appendChild(bar); wrap.appendChild(body);
+    document.body.appendChild(wrap); document.body.classList.add('noscroll');
+    history.pushState({ mview: 1 }, ''); window.addEventListener('popstate', onPop); document.addEventListener('keydown', onKey);
+    if (pdf && adaOff) { tampilPdfOffline(f, body); return; }
+    if (!navigator.onLine || MAT.offline) { body.appendChild(h('div', { class: 'empty-note', text: 'Tidak ada internet. File ini belum disimpan untuk dibaca offline.' })); return; }
+    body.appendChild(h('div', { class: 'mvload' }, [h('div', { class: 'skel' }), h('p', { class: 'dnote', text: 'Membuka file…' })]));
+    var fr = h('iframe', { src: 'https://drive.google.com/file/d/' + f.id + '/preview', title: namaTampil(f.nama), allow: 'autoplay; fullscreen', allowfullscreen: true });
+    fr.addEventListener('load', function () { var l = body.querySelector('.mvload'); if (l) l.remove(); });
+    body.appendChild(fr);
+  }
+
+  /* ---------- simpan PDF untuk offline ---------- */
+  function simpanOffline(f, b) {
+    if (!('caches' in window)) return Promise.reject(new Error('Perangkat ini tidak mendukung penyimpanan offline.'));
+    b.disabled = true;
+    var bagian = [], parts = 1;
+    var ambil = function (i) {
+      b.lastChild.textContent = 'Menyimpan' + (parts > 1 ? ' ' + (i + 1) + '/' + parts : '') + '…';
+      return api('materiPdf', { fileId: f.id, part: i }).then(function (r) {
+        parts = r.parts;
+        var bin = atob(r.b64), u = new Uint8Array(bin.length);
+        for (var k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+        bagian.push(u);
+        return i + 1 < parts ? ambil(i + 1) : null;
+      });
+    };
+    return ambil(0).then(function () {
+      var blob = new Blob(bagian, { type: 'application/pdf' });
+      return caches.open(OFF_CACHE).then(function (c) { return c.put(offKey(f.id), new Response(blob, { headers: { 'Content-Type': 'application/pdf' } })); })
+        .then(function () { offSet(f.id, { nama: f.nama, ukuran: blob.size, waktu: Date.now() }); b.disabled = false; toast('Tersimpan di perangkat. File ini bisa dibuka tanpa internet.'); muatPdfJs().catch(function () { /* nanti */ }); });
+    });
+  }
+  function hapusOffline(f) {
+    offSet(f.id, null);
+    return 'caches' in window ? caches.open(OFF_CACHE).then(function (c) { return c.delete(offKey(f.id)); }) : Promise.resolve();
+  }
+  var pdfjsP = null;
+  function muatPdfJs() {
+    if (!pdfjsP) pdfjsP = import(new URL(LAPORAN + 'vendor/pdfjs/pdf.min.mjs', location.href).href).then(function (m) {
+      m.GlobalWorkerOptions.workerSrc = new URL(LAPORAN + 'vendor/pdfjs/pdf.worker.min.mjs', location.href).href;
+      fetch(m.GlobalWorkerOptions.workerSrc).catch(function () { /* disimpan service worker bila online */ });
+      return m;
+    }).catch(function (e) { pdfjsP = null; throw e; });
+    return pdfjsP;
+  }
+  function tampilPdfOffline(f, body) {
+    body.classList.add('pdfv');
+    var pesan = h('p', { class: 'dnote', text: 'Membuka dari perangkat…' });
+    body.appendChild(pesan);
+    Promise.all([caches.open(OFF_CACHE).then(function (c) { return c.match(offKey(f.id)); }), muatPdfJs()]).then(function (r) {
+      if (!r[0]) throw new Error('Salinan di perangkat tidak ditemukan. Simpan ulang file ini.');
+      return r[0].arrayBuffer().then(function (buf) { return r[1].getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise; });
+    }).then(function (doc) {
+      pesan.remove();
+      var lebar = Math.min(body.clientWidth - 16, 900), dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var obs = 'IntersectionObserver' in window ? new IntersectionObserver(function (ents) {
+        ents.forEach(function (en) { if (en.isIntersecting && !en.target._ok) { en.target._ok = 1; gambar(en.target); } });
+      }, { root: body, rootMargin: '600px 0px' }) : null;
+      var gambar = function (box) {
+        doc.getPage(box._n).then(function (pg) {
+          var v0 = pg.getViewport({ scale: 1 }), sc = lebar / v0.width, v = pg.getViewport({ scale: sc * dpr });
+          var cv = h('canvas', {}); cv.width = v.width; cv.height = v.height; cv.style.width = lebar + 'px'; cv.style.height = (v.height / dpr) + 'px';
+          box.textContent = ''; box.style.height = ''; box.appendChild(cv);
+          pg.render({ canvasContext: cv.getContext('2d'), viewport: v });
+        });
+      };
+      for (var n = 1; n <= doc.numPages; n++) {
+        var box = h('div', { class: 'pdfpg' }); box._n = n; box.style.width = lebar + 'px'; box.style.height = Math.round(lebar * 1.414) + 'px';
+        body.appendChild(box);
+        if (obs) obs.observe(box); else gambar(box);
+      }
+    }).catch(function (e) { pesan.textContent = e.message || 'PDF tidak bisa dibuka.'; });
+  }
+
   function renderView() {
-    var tv = $('tesview'), t = onTes();
+    var tv = $('tesview'), t = onTes(), mt = onMateri(), v = t || mt;
     if (!tv) return;
-    tv.hidden = !t;
-    if (me) ['list', 'addwrap'].forEach(function (id) { $(id).hidden = t; });
-    var lb = document.querySelector('.label'); if (lb && me) lb.hidden = t;
+    tv.hidden = !v;
+    if (me) ['list', 'addwrap'].forEach(function (id) { $(id).hidden = v; });
+    var lb = document.querySelector('.label'); if (lb && me) lb.hidden = v;
     clearInterval(tesTimer); tesTimer = null;
     var masuk = t && !tesWas;
     tesWas = t;
+    if (mt) { bukaMateri(location.hash.slice(9)); return; }
     if (!t) return;
     if (masuk) tesData = null;   // selalu ambil status terbaru saat halaman dibuka
     renderTes();
@@ -854,9 +1121,11 @@
     tesAct[k] = true; renderTes();
     api('tesSet', { sekolahId: sk.id, no: t.no, jenis: jenis, buka: buka }).then(function (d) {
       tesData = d;
-      toast(JENIS_LBL[jenis] + ' P' + t.no + (buka ? ' dibuka untuk ' + sk.nama + ' sampai pukul 23.59.' : ' ditutup.')
-        + (buka && jenis === 'post' && preBuka ? ' Pretes otomatis ditutup.' : '')
-        + (buka && jenis === 'post' && t.ref && t.ref.ada ? ' Refleksi ikut dibuka.' : ''));
+      var pesan = JENIS_LBL[jenis] + ' P' + t.no + (buka ? ' dibuka untuk ' + sk.nama + ' sampai pukul 23.59.' : ' ditutup.');
+      if (buka && jenis === 'pre') pesan += ' Materi P' + t.no + ' ikut ditampilkan.';
+      if (buka && jenis === 'post' && preBuka) pesan += ' Pretes otomatis ditutup.';
+      if (buka && jenis === 'post' && t.ref && t.ref.ada) pesan += ' Refleksi ikut dibuka.';
+      toast(pesan);
     }).catch(function (e) { toast(e.message, true); }).then(function () { delete tesAct[k]; renderTes(); });
   }
 

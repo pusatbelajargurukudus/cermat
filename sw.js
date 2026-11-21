@@ -5,12 +5,13 @@
  * - Mode Admin (api.github.com) tidak pernah lewat cache.
  * - Petunjuk (panduan/) disimpan di HP saat pertama dibuka; pembukaan berikutnya langsung dari HP
  *   (juga offline) dan diperbarui diam-diam saat ada sinyal. PDF petunjuk tidak disimpan otomatis.
+ * - Materi PDF yang disimpan offline ada di cache 'cermat-materi' (dikelola halaman, tidak dihapus saat pembaruan).
  * Naikkan CACHE bila index.html, assets/style.css, assets/app.js, atau fonts/ diubah.
  * Naikkan PANDUAN bila isi folder panduan/ diganti. */
-const CACHE = 'cermat-pustaka-v14';
-const PANDUAN = 'cermat-panduan-v7';
+const CACHE = 'cermat-pustaka-v15';
+const PANDUAN = 'cermat-panduan-v8';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'data.json',
-  'assets/style.css?v=13', 'assets/app.js?v=16', 'assets/logo.png', 'fonts/fonts.css?v=1',
+  'assets/style.css?v=14', 'assets/app.js?v=17', 'assets/logo.png', 'fonts/fonts.css?v=1',
   'fonts/jakarta-400.woff2', 'fonts/jakarta-500.woff2', 'fonts/jakarta-600.woff2', 'fonts/jakarta-700.woff2', 'fonts/jakarta-800.woff2',
   'fonts/cormorant-600.woff2', 'fonts/cormorant-500i.woff2', 'fonts/cormorant-600i.woff2',
   'assets/logo-pbg.png', 'assets/logo-kemenag.png', 'assets/logo-disdikpora.png', 'assets/logo-djarum.png',
@@ -36,6 +37,11 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (FONT_HOSTS.includes(url.hostname)) {
+    e.respondWith(caches.match(req).then(r => r || fetch(req).then(res => put(req, res))));
+    return;
+  }
+  // penampil PDF (milik LAPORAN CERMAT) untuk materi yang disimpan offline: simpan setelah pertama dipakai
+  if (url.origin === location.origin && url.pathname.indexOf('/vendor/pdfjs/') >= 0) {
     e.respondWith(caches.match(req).then(r => r || fetch(req).then(res => put(req, res))));
     return;
   }
