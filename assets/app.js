@@ -750,10 +750,12 @@
   function tesSet(t, sk, jenis, buka) {
     var k = t.no + jenis + sk.id;
     if (tesAct[k]) return;
+    var preBuka = !!((t.status || {})[sk.id] || {}).pre;
     tesAct[k] = true; renderTes();
     api('tesSet', { sekolahId: sk.id, no: t.no, jenis: jenis, buka: buka }).then(function (d) {
       tesData = d;
-      toast((jenis === 'pre' ? 'Pretes' : 'Postes') + ' P' + t.no + (buka ? ' dibuka untuk ' + sk.nama + ' sampai pukul 23.59.' : ' ditutup.'));
+      toast((jenis === 'pre' ? 'Pretes' : 'Postes') + ' P' + t.no + (buka ? ' dibuka untuk ' + sk.nama + ' sampai pukul 23.59.' : ' ditutup.')
+        + (buka && jenis === 'post' && preBuka ? ' Pretes otomatis ditutup.' : ''));
     }).catch(function (e) { toast(e.message, true); }).then(function () { delete tesAct[k]; renderTes(); });
   }
 
@@ -762,7 +764,7 @@
     var peran = me.peran, d = tesData;
     var peserta = peran === 'guru' || peran === 'kepsek';
     var sub = peserta ? 'Ketuk tes yang sudah dibuka fasilitator. Tombol yang terkunci akan terbuka saat pendampingan.'
-      : peran === 'fasilitator' ? 'Buka tes untuk sekolah binaan Anda saat pendampingan. Tes otomatis tertutup pukul 23.59 hari itu.'
+      : peran === 'fasilitator' ? 'Buka tes untuk sekolah binaan Anda saat pendampingan. Membuka postes otomatis menutup pretes. Tes tertutup sendiri pukul 23.59 hari itu.'
       : peran === 'admin' ? 'Isi tautan Google Form tiap pendampingan lewat Atur tautan. Status menunjukkan tes yang sedang dibuka di setiap sekolah.'
       : 'Tes yang sedang dibuka di setiap sekolah.';
     tv.textContent = '';
