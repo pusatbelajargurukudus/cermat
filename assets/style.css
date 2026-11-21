@@ -581,3 +581,8 @@ a.btn { text-decoration: none; }
 .pn.lain .pnn { font-weight: 600; color: var(--muted); }
 .pngo { text-decoration: none; text-align: center; }
 .pngo[aria-disabled=true] { opacity: .5; pointer-events: none; }
+
+/* Refleksi */
+.tesbtns > :only-child, .tesbtns > :nth-child(3):last-child { grid-column: 1 / -1; }
+.lgrp { margin: 10px 0 2px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-ink); }
+.rlist { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--text); max-height: 320px; overflow-y: auto; }
