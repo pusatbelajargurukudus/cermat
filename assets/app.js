@@ -237,7 +237,7 @@
     ];
     if (ok) kids.push(h('div', { class: 'go' }, [ic('arrow', 18, 2)]));
     var fid = ok && me ? driveFolderId(l.url) : '';
-    if (fid) { MAT_JUDUL[fid] = l.title; return h('a', { class: cls, href: '#/materi/' + fid }, kids); }   // daftar file tampil di dalam CERMAT
+    if (fid) return h('a', { class: cls, href: '#/materi/' + fid + '/' + encodeURIComponent(l.title) }, kids);   // daftar file tampil di dalam CERMAT
     if (ok) {
       // tautan ke situs ini sendiri (mis. LAPORAN CERMAT) dibuka di jendela yang sama agar tetap di dalam aplikasi
       var same = false;
@@ -721,35 +721,42 @@
    * tampil di dalam CERMAT. Guru & kepsek hanya bisa membuka materi pendampingan yang sudah
    * ditampilkan fasilitator. PDF bisa disimpan di perangkat untuk dibaca tanpa internet.
    * ========================================================= */
-  var MAT_JUDUL = {}, MAT = { fid: '', data: null, err: '', busy: false, sid: '', offline: false };
+  var MAT = { fid: '', kartu: '', data: null, err: '', busy: false, sid: '', offline: false };
   var OFF_CACHE = 'cermat-materi', OFF_IDX = 'cermat_materi_offline';
-  function onMateri() { return !!me && !admin && /^#\/materi\/[A-Za-z0-9_-]{10,}$/.test(location.hash); }
+  function onMateri() { return !!me && !admin && /^#\/materi\/[A-Za-z0-9_-]{10,}(\/.*)?$/.test(location.hash); }
   function driveFolderId(u) { var m = String(u || '').match(/drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([A-Za-z0-9_-]{10,})/); return m ? m[1] : ''; }
   function staf() { return me && (me.peran === 'admin' || me.peran === 'fasilitator' || me.peran === 'pemantau'); }
   function offIdx() { try { return JSON.parse(localStorage.getItem(OFF_IDX) || '{}'); } catch (e) { return {}; } }
   function offSet(id, v) { var x = offIdx(); if (v) x[id] = v; else delete x[id]; try { localStorage.setItem(OFF_IDX, JSON.stringify(x)); } catch (e) { /* penuh */ } }
   function offKey(id) { return new URL('__materi_offline/' + id + '.pdf', location.href).href; }
 
-  function bukaMateri(fid) {
-    if (MAT.fid !== fid) { MAT = { fid: fid, data: null, err: '', busy: false, sid: MAT.sid, offline: false }; }
+  function matKey() { return 'cermat_materi_' + (me ? me.username : '') + '_' + MAT.fid + '_' + MAT.kartu; }   // per akun: HP bisa dipakai bergantian
+  function bukaMateri(fid, kartu) {
+    if (MAT.fid !== fid || MAT.kartu !== kartu) {
+      MAT = { fid: fid, kartu: kartu, data: null, err: '', busy: false, sid: MAT.sid, offline: false };
+      // tampil seketika dari daftar terakhir di perangkat, lalu diperbarui diam-diam
+      try { MAT.data = JSON.parse(localStorage.getItem(matKey()) || 'null'); } catch (e) { MAT.data = null; }
+      renderMateri();
+      muatMateri(false);
+      return;
+    }
     renderMateri();
     if (!MAT.data && !MAT.busy) muatMateri(false);
   }
   function muatMateri(segar) {
-    var fid = MAT.fid;
-    MAT.busy = true; MAT.err = ''; renderMateri();
-    api('materiList', { folderId: fid, segar: !!segar }).then(function (d) {
-      if (MAT.fid !== fid) return;
+    var fid = MAT.fid, kartu = MAT.kartu;
+    MAT.busy = true; MAT.err = ''; MAT.segar = !!segar; renderMateri();
+    api('materiList', { folderId: fid, kartu: kartu, segar: !!segar }).then(function (d) {
+      if (MAT.fid !== fid || MAT.kartu !== kartu) return;
       MAT.data = d; MAT.offline = false;
-      try { localStorage.setItem('cermat_materi_' + fid, JSON.stringify(d)); } catch (e) { /* penuh */ }
+      try { localStorage.setItem(matKey(), JSON.stringify(d)); } catch (e) { /* penuh */ }
+      if (segar) toast('Daftar diperbarui dari Google Drive.');
     }).catch(function (e) {
-      if (MAT.fid !== fid) return;
-      var simpan = null;
-      try { simpan = JSON.parse(localStorage.getItem('cermat_materi_' + fid) || 'null'); } catch (x) { simpan = null; }
-      if (e.offline && simpan) { MAT.data = simpan; MAT.offline = true; }
-      else MAT.err = e.message;
+      if (MAT.fid !== fid || MAT.kartu !== kartu) return;
+      if (e.offline && MAT.data) MAT.offline = true;
+      else if (!MAT.data || !e.offline) { MAT.err = e.message; if (!e.offline) MAT.data = null; }
       if (e.code === 'AUTH') { clearSession(); renderAll(); }
-    }).then(function () { if (MAT.fid === fid) { MAT.busy = false; if (onMateri()) renderMateri(); } });
+    }).then(function () { if (MAT.fid === fid && MAT.kartu === kartu) { MAT.busy = false; MAT.segar = false; if (onMateri()) renderMateri(); } });
   }
 
   var FASE_P = [[1, 7], [8, 16], [17, 22]];
@@ -799,15 +806,18 @@
     tv.appendChild(h('div', { class: 'teshead' }, [
       h('a', { class: 'btn ghost sm', href: '#/' }, [ic('back', 16, 2.2), h('span', { text: 'Folder utama' })]),
       h('span', { class: 'spacer' }),
-      btn(MAT.busy ? 'Memuat…' : 'Muat ulang', 'ghost sm', { disabled: MAT.busy, onclick: function () { muatMateri(staf()); } })
+      staf() && peran !== 'pemantau'
+        ? btn(MAT.busy && MAT.segar ? 'Memperbarui…' : 'Perbarui daftar', 'ghost sm', { disabled: MAT.busy, title: 'Baca ulang isi folder Google Drive (mis. setelah mengunggah file baru)', onclick: function () { muatMateri(true); } })
+        : btn(MAT.busy ? 'Memuat…' : 'Muat ulang', 'ghost sm', { disabled: MAT.busy, onclick: function () { muatMateri(false); } })
     ]));
-    var judul = (d && d.kartu) || MAT_JUDUL[MAT.fid] || 'Materi';
+    var judul = (d && d.kartu) || MAT.kartu || 'Materi';
     var sub = peserta ? 'Ketuk file untuk membukanya. Materi pendampingan terbuka setelah ditampilkan fasilitator.'
       : peran === 'fasilitator' ? 'Ketuk file untuk membukanya. Tampilkan materi setiap pendampingan untuk guru dan kepala sekolah sekolah binaan Anda; materi juga tampil otomatis saat pretes diaktifkan.'
       : 'Ketuk file untuk membukanya. Status menunjukkan materi yang sudah ditampilkan untuk sekolah terpilih.';
     tv.appendChild(h('div', { class: 'label' }, [h('h2', { text: judul }), h('p', { class: 'sub', text: sub })]));
     if (MAT.err) { tv.appendChild(h('div', { class: 'empty-note', text: MAT.err })); return; }
     if (!d) { for (var i = 0; i < 3; i++) tv.appendChild(h('div', { class: 'skel' })); return; }
+    if (d.dibuat && staf()) tv.appendChild(h('p', { class: 'mwaktu', text: 'Daftar file per ' + new Date(d.dibuat).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':') + ' · diperbarui otomatis tiap jam' + (MAT.busy ? ' · memeriksa…' : '') }));
     if (MAT.offline) tv.appendChild(h('div', { class: 'notice mnote' }, [h('strong', { text: 'Tanpa internet' }), h('span', { text: 'Daftar dari penyimpanan perangkat. Hanya file bertanda "Tersimpan" yang bisa dibuka.' })]));
     var sks = d.sekolah || [];
     if (!MAT.sid || !sks.some(function (x) { return x.id === MAT.sid; })) MAT.sid = sks.length ? sks[0].id : '';
@@ -984,7 +994,7 @@
     clearInterval(tesTimer); tesTimer = null;
     var masuk = t && !tesWas;
     tesWas = t;
-    if (mt) { bukaMateri(location.hash.slice(9)); return; }
+    if (mt) { var bag = location.hash.slice(9).split('/'); bukaMateri(bag[0], decodeURIComponent(bag.slice(1).join('/'))); return; }
     if (!t) return;
     if (masuk) tesData = null;   // selalu ambil status terbaru saat halaman dibuka
     renderTes();

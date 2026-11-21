@@ -641,3 +641,4 @@ body.noscroll { overflow: hidden; }
   .mva .btn { padding: 0 10px; }
   .mrgrid { grid-template-columns: 1fr; }
 }
+.mwaktu { margin: -6px 0 12px; font-size: 12px; color: var(--muted); }
