@@ -24,7 +24,7 @@
         {
           "title": "Modul",
           "desc": "Modul Pendampingan",
-          "url": "https://drive.google.com/drive/folders/13HR6VCYE0PGtpz-zHwT5QKxn5YpmhpJE?usp=sharing",
+          "url": "https://drive.google.com/drive/folders/13HR6VCYE0PGtpz-zHwT5QKxn5YpmhpJE?usp=drive_link",
           "icon": "folder",
           "access": "publik",
           "primary": true,
@@ -35,7 +35,7 @@
         {
           "title": "Bahan Tayang",
           "desc": "Slide dan bahan presentasi",
-          "url": "https://drive.google.com/drive/folders/13HR6VCYE0PGtpz-zHwT5QKxn5YpmhpJE?usp=sharing",
+          "url": "https://drive.google.com/drive/folders/13HR6VCYE0PGtpz-zHwT5QKxn5YpmhpJE?usp=drive_link",
           "icon": "tayang",
           "access": "publik",
           "primary": true,
