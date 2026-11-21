@@ -5,6 +5,7 @@
    Admin, Fasilitator, Pemantau melihat semua folder; Kepala Sekolah & Guru hanya folder yang dicentang untuk mereka.
    v10: tampilan baru (kepala halaman biru tua, kartu putih), profil di kanan atas membuka dialog "Akun Saya".
    v11: kartu "Petunjuk Penggunaan" (folder panduan/) dan tautan petunjuk di halaman masuk.
+   v13: tombol "Lihat hasil" di kartu Pretes & Postes (fasilitator, admin, pemantau): nilai langsung dari Google Form.
    v12: halaman "Pretes & Postes" (#/tes): fasilitator membuka/menutup tes per sekolah, guru & kepala sekolah
         hanya bisa membuka form saat tes dibuka, admin mengisi tautan edit Google Form (disimpan di server). */
 (function () {
@@ -809,16 +810,149 @@
           if (sks.length > 1) kids.push(h('div', { class: 'tessk', text: sk.nama }));
           kids.push(h('div', { class: 'tesrows' }, rows));
         });
+        kids.push(hasilBtn(t));
       } else {
         var aktif = [];
         sks.forEach(function (sk) { var st = (t.status || {})[sk.id]; if (st) aktif.push(sk.nama + ': ' + ['pre', 'post'].filter(function (j) { return st[j]; }).map(function (j) { return j === 'pre' ? 'pretes' : 'postes'; }).join(' & ')); });
         kids.push(h('div', { class: 'tesnote' + (aktif.length ? ' ok' : '') }, aktif.length ? aktif.map(function (x) { return h('div', { text: 'Dibuka · ' + x }); }) : [h('span', { text: 'Tidak ada sekolah yang sedang membuka tes ini.' })]));
-        if (peran === 'admin' && t.url) kids.push(h('div', { class: 'tesbtns' }, [
-          h('a', { class: 'btn ghost sm', href: tesUrl(t, 'pre'), target: '_blank', rel: 'noopener' }, [h('span', { text: 'Lihat form' })])]));
+        kids.push(h('div', { class: 'tesbtns' }, [
+          hasilBtn(t),
+          peran === 'admin' && t.url ? h('a', { class: 'btn ghost sm', href: tesUrl(t, 'pre'), target: '_blank', rel: 'noopener' }, [h('span', { text: 'Lihat form' })]) : null]));
       }
       grid.appendChild(h('div', { class: 'card tes' + (t.ada ? '' : ' empty') }, kids));
     });
     tv.appendChild(grid);
+  }
+
+  /* ---------- Lihat hasil: nilai langsung dari jawaban Google Form ----------
+   * Aturan sama dengan impor di LAPORAN CERMAT (memakai js/importer.js milik LAPORAN): kolom dikenali otomatis,
+   * kiriman terakhir per nama & jenis tes yang dipakai, nama sekolah dicocokkan termasuk ejaan lain. */
+  function hasilBtn(t) {
+    return btn('Lihat hasil', 'ghost sm hasilbtn', { onclick: function () { hasilDialog(t); } });
+  }
+  var importerP = null;
+  function loadImporter() {
+    if (window.Importer) return Promise.resolve(window.Importer);
+    if (!importerP) importerP = new Promise(function (ok, no) {
+      var sc = document.createElement('script');
+      sc.src = LAPORAN + 'js/importer.js';
+      sc.onload = function () { window.Importer ? ok(window.Importer) : no(new Error('Pengolah nilai tidak termuat.')); };
+      sc.onerror = function () { importerP = null; no(new Error('Pengolah nilai tidak termuat. Periksa koneksi internet.')); };
+      document.head.appendChild(sc);
+    });
+    return importerP;
+  }
+  function fmtN(v) { return v === null || v === undefined || isNaN(v) ? '–' : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 2 }); }
+  function ringkas(list) {   // list: [{nama, skor}]
+    if (!list.length) return { n: 0, avg: null, min: null, max: null, minN: [], maxN: [] };
+    var sk = list.map(function (x) { return x.skor; });
+    var mn = Math.min.apply(null, sk), mx = Math.max.apply(null, sk);
+    var eqv = function (a, b) { return Math.abs(a - b) < 1e-9; };
+    return { n: list.length, avg: sk.reduce(function (a, b) { return a + b; }, 0) / list.length, min: mn, max: mx,
+      minN: list.filter(function (x) { return eqv(x.skor, mn); }).map(function (x) { return x.nama; }),
+      maxN: list.filter(function (x) { return eqv(x.skor, mx); }).map(function (x) { return x.nama; }) };
+  }
+  function olahHasil(I, rows, sks, no) {
+    var an = I.analyze(rows), c = an.cols;
+    var kurang = [['nama', 'Nama'], ['sekolah', 'Asal sekolah'], ['jenis', 'Jenis tes'], ['skor', 'Skor']].filter(function (k) { return c[k[0]] < 0; }).map(function (k) { return k[1]; });
+    if (kurang.length) throw new Error('Kolom ' + kurang.join(', ') + ' tidak ditemukan di form.' + (c.skor < 0 ? ' Pastikan form diatur sebagai Kuis.' : ''));
+    var nilai = I.distinct(an.body, c.sekolah);
+    var dipakai = {};
+    var per = sks.map(function (sk) {
+      var vals = nilai.filter(function (v) { return I.schoolMatch(v.value, sk); }).map(function (v) { dipakai[v.value] = true; return v.value; });
+      var ex = vals.length ? I.extract(an, c, vals, no).rows : [];
+      var orang = {};
+      ex.forEach(function (r) { var k = I.normName(r.nama); (orang[k] = orang[k] || { nama: r.nama, pre: null, post: null })[r.jenis] = r.skor; });
+      var daftar = Object.keys(orang).map(function (k) { return orang[k]; }).sort(function (a, b) { return a.nama.localeCompare(b.nama, 'id'); });
+      return { sk: sk, daftar: daftar, pre: ringkas(ex.filter(function (r) { return r.jenis === 'pre'; })), post: ringkas(ex.filter(function (r) { return r.jenis === 'post'; })) };
+    });
+    var lain = nilai.filter(function (v) { return !dipakai[v.value]; });
+    var semua = { pre: [], post: [] };
+    per.forEach(function (x) { x.daftar.forEach(function (o) { if (o.pre !== null) semua.pre.push({ nama: o.nama, skor: o.pre }); if (o.post !== null) semua.post.push({ nama: o.nama, skor: o.post }); }); });
+    return { per: per, lain: lain, semua: { pre: ringkas(semua.pre), post: ringkas(semua.post) } };
+  }
+  function naik(pre, post) {
+    if (pre.avg === null || post.avg === null) return '–';
+    var d = post.avg - pre.avg;
+    return (d >= 0 ? '+' : '−') + fmtN(Math.abs(d)) + (pre.avg ? ' (' + (d >= 0 ? '+' : '−') + fmtN(Math.abs(d) / pre.avg * 100) + '%)' : '');
+  }
+  function kotakRingkas(judul, r) {
+    var nm = function (a) { return a.length > 2 ? a.slice(0, 2).join(', ') + ' +' + (a.length - 2) : a.join(', '); };
+    return h('div', { class: 'hbox' }, [
+      h('div', { class: 'hbt' }, [h('b', { text: judul }), h('span', { text: r.n + ' peserta' })]),
+      h('div', { class: 'hbn' }, [
+        h('div', {}, [h('span', { text: 'Rata-rata' }), h('b', { text: fmtN(r.avg) })]),
+        h('div', { class: 'lo' }, [h('span', { text: 'Terendah' }), h('b', { text: fmtN(r.min) }), r.n ? h('small', { text: nm(r.minN) }) : null]),
+        h('div', { class: 'hi' }, [h('span', { text: 'Tertinggi' }), h('b', { text: fmtN(r.max) }), r.n ? h('small', { text: nm(r.maxN) }) : null])
+      ])
+    ]);
+  }
+  function tabelPeserta(x) {
+    if (!x.daftar.length) return h('p', { class: 'dnote', text: 'Belum ada jawaban dari sekolah ini.' });
+    var cls = function (v, r) { return v === null ? '' : (Math.abs(v - r.min) < 1e-9 ? 'lo' : (Math.abs(v - r.max) < 1e-9 ? 'hi' : '')); };
+    return h('div', { class: 'tscroll' }, [h('table', { class: 'htab' }, [
+      h('thead', {}, [h('tr', {}, ['No', 'Nama', 'Pretes', 'Postes', 'Kenaikan'].map(function (t, i) { return h('th', { class: i > 1 ? 'num' : '', text: t }); }))]),
+      h('tbody', {}, x.daftar.map(function (o, i) {
+        var d = o.pre !== null && o.post !== null ? o.post - o.pre : null;
+        return h('tr', {}, [h('td', { class: 'num', text: String(i + 1) }), h('td', { text: o.nama }),
+          h('td', { class: 'num ' + cls(o.pre, x.pre), text: fmtN(o.pre) }), h('td', { class: 'num ' + cls(o.post, x.post), text: fmtN(o.post) }),
+          h('td', { class: 'num', text: d === null ? '–' : (d >= 0 ? '+' : '−') + fmtN(Math.abs(d)) })]);
+      }))
+    ])]);
+  }
+  function hasilDialog(t) {
+    var body = h('div', { class: 'hasil' }, [h('div', { class: 'skel' }), h('p', { class: 'dnote', text: 'Membaca jawaban Google Form…' })]);
+    var d = openDialog('Hasil P' + t.no + ' · ' + (TES_JUDUL[t.no - 1] || ''), [body], [btn('Tutup', 'ghost', { onclick: function () { d.close(); } })]);
+    d.dlg.classList.add('wide');
+    d.form.addEventListener('submit', function (ev) { ev.preventDefault(); });
+    var sks = (tesData && tesData.sekolah) || [];
+    var semua = me.peran === 'admin' || me.peran === 'pemantau';
+    Promise.all([loadImporter(), api('tesResponses', semua ? { no: t.no } : { no: t.no, sekolahId: (sks[0] || {}).id })]).then(function (r) {
+      var I = r[0], res = r[1];
+      body.textContent = '';
+      var info = h('p', { class: 'dnote', text: 'Langsung dari Google Form "' + (res.judul || '') + '" · ' + res.jumlah + ' jawaban · nilai skala 0–100 · kiriman terakhir per nama yang dipakai.' });
+      if (res.jumlah === 0) { body.appendChild(info); body.appendChild(h('div', { class: 'empty-note', text: 'Belum ada jawaban.' })); return; }
+      var o = olahHasil(I, res.rows, sks, t.no);
+      body.appendChild(info);
+      if (!semua) {
+        var x = o.per[0];
+        body.appendChild(h('div', { class: 'hgrid' }, [kotakRingkas('Pretes', x.pre), kotakRingkas('Postes', x.post)]));
+        body.appendChild(h('div', { class: 'hnaik' }, [h('span', { text: 'Kenaikan rata-rata' }), h('b', { text: naik(x.pre, x.post) })]));
+        body.appendChild(tabelPeserta(x));
+        return;
+      }
+      var cel = function (r) { return [h('td', { class: 'num', text: String(r.n) }), h('td', { class: 'num lo', text: fmtN(r.min) }), h('td', { class: 'num hi', text: fmtN(r.max) }), h('td', { class: 'num b', text: fmtN(r.avg) })]; };
+      var detail = h('div', { class: 'hdetail' });
+      var rows = o.per.map(function (x) {
+        var tr = h('tr', { class: 'click', tabindex: '0', title: 'Lihat nilai peserta' }, [h('td', { text: x.sk.nama })].concat(cel(x.pre), cel(x.post), [h('td', { class: 'num', text: naik(x.pre, x.post) })]));
+        var buka = function () {
+          [].forEach.call(tr.parentNode.children, function (r) { r.classList.remove('on'); }); tr.classList.add('on');
+          detail.textContent = '';
+          detail.appendChild(h('h3', { text: x.sk.nama }));
+          detail.appendChild(h('div', { class: 'hgrid' }, [kotakRingkas('Pretes', x.pre), kotakRingkas('Postes', x.post)]));
+          detail.appendChild(tabelPeserta(x));
+          detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+        tr.addEventListener('click', buka); tr.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); buka(); } });
+        return tr;
+      });
+      rows.push(h('tr', { class: 'tot' }, [h('td', { text: 'Semua sekolah' })].concat(cel(o.semua.pre), cel(o.semua.post), [h('td', { class: 'num', text: naik(o.semua.pre, o.semua.post) })])));
+      var th2 = function (t) { return h('th', { class: 'num', text: t }); };
+      body.appendChild(h('div', { class: 'tscroll' }, [h('table', { class: 'htab sk' }, [
+        h('thead', {}, [
+          h('tr', {}, [h('th', { rowspan: '2', text: 'Sekolah' }), h('th', { colspan: '4', class: 'grp', text: 'Pretes' }), h('th', { colspan: '4', class: 'grp', text: 'Postes' }), h('th', { rowspan: '2', class: 'num', text: 'Kenaikan' })]),
+          h('tr', {}, [th2('n'), th2('Terendah'), th2('Tertinggi'), th2('Rata-rata'), th2('n'), th2('Terendah'), th2('Tertinggi'), th2('Rata-rata')])
+        ]),
+        h('tbody', {}, rows)
+      ])]));
+      body.appendChild(h('p', { class: 'fh', text: 'Ketuk nama sekolah untuk melihat nilai setiap peserta.' }));
+      if (o.lain.length) body.appendChild(h('div', { class: 'notice' }, [h('strong', { text: 'Asal sekolah tidak dikenali' }),
+        h('span', { text: o.lain.map(function (v) { return '"' + v.value + '" (' + v.count + ' jawaban)'; }).join(', ') + '. Jawaban ini tidak dihitung. Tambahkan sebagai ejaan lain sekolah di LAPORAN CERMAT (Data Sekolah) atau perbaiki pilihan di form.' })]));
+      body.appendChild(detail);
+    }).catch(function (e) {
+      body.textContent = '';
+      body.appendChild(h('div', { class: 'ferr', text: e.code === 'NOFORM' ? 'Tautan Google Form P' + t.no + ' belum diisi admin.' : e.message }));
+    });
   }
 
   function tesLinksDialog() {
