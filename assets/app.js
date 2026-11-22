@@ -225,8 +225,7 @@
 
   function publicCard(l) {
     var ok = validUrl(l.url);
-    var hl = isLaporanLink(l);
-    var cls = 'card' + (hl ? ' hl' : '') + (ok ? '' : ' empty');
+    var cls = 'card' + (ok ? '' : ' empty');   // semua kartu seragam (tanpa bingkai emas)
     var meta = [];
     if (l.desc) meta.push(h('span', { text: l.desc }));
     if (l.access === 'terbatas') meta.push(accessTag(l));
@@ -1482,7 +1481,7 @@
   }
 
   function laporanCard(title, desc, hash) {
-    return h('a', { class: 'card hl', href: LAPORAN + (hash || '') }, [
+    return h('a', { class: 'card', href: LAPORAN + (hash || '') }, [
       h('div', { class: 'chipicon' }, [ic('laporan', 26)]),
       h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: title }), h('div', { class: 'meta' }, [h('span', { text: desc })])]),
       h('div', { class: 'go' }, [ic('arrow', 18, 2)])
