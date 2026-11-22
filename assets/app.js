@@ -44,7 +44,8 @@
     close: '<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
     external: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
     pdf: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h5"/>',
-    offline: '<path d="M7 18a4.5 4.5 0 1 1 .9-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/><path d="M9.5 13.5l2 2 3.5-3.5"/>'
+    offline: '<path d="M7 18a4.5 4.5 0 1 1 .9-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/><path d="M9.5 13.5l2 2 3.5-3.5"/>',
+    star: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/>'
   };
   var ICON_NAMES = ['folder', 'materi', 'soal', 'foto', 'laporan', 'template', 'tayang', 'unggah', 'link'];
   var ICON_LABEL = {
@@ -285,7 +286,11 @@
       list.appendChild(publicCard(l));
     });
     if (!shown) list.appendChild(h('div', { class: 'empty-note', text: admin ? 'Belum ada folder. Tekan "Tambah folder".' : 'Belum ada folder yang ditampilkan.' }));
-    if (!admin) { list.appendChild(tesHomeCard()); list.appendChild(guideCard()); }
+    if (!admin) {
+      list.appendChild(tesHomeCard());
+      if (me.peran === 'guru' || me.peran === 'kepsek') list.appendChild(bintangHomeCard());
+      list.appendChild(guideCard());
+    }
     var aw = $('addwrap');
     aw.textContent = '';
     if (admin) {
@@ -716,6 +721,78 @@
   function onTes() { return !!me && !admin && location.hash === '#/tes'; }
 
   /* =========================================================
+   * PEROLEHAN BINTANG (#/bintang) — guru & kepala sekolah: bintang reward setiap guru sekolahnya,
+   * per pendampingan dan total, urut peringkat. Laporan yang belum disahkan ditandai sementara.
+   * ========================================================= */
+  var BT = { data: null, err: '', busy: false, cari: '' };
+  function bintangHomeCard() {
+    return h('a', { class: 'card', href: '#/bintang' }, [
+      h('div', { class: 'chipicon' }, [ic('star', 26)]),
+      h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: 'Perolehan Bintang' }), h('div', { class: 'meta' }, [h('span', { text: 'Bintang reward guru per pendampingan' })])]),
+      h('div', { class: 'go' }, [ic('arrow', 18, 2)])
+    ]);
+  }
+  function onBintang() { return !!me && !admin && (me.peran === 'guru' || me.peran === 'kepsek') && location.hash === '#/bintang'; }
+  function bukaBintang() {
+    renderBintang();
+    if (!BT.busy) muatBintang();
+  }
+  function muatBintang() {
+    BT.busy = true; BT.err = ''; renderBintang();
+    api('bintangSekolah').then(function (d) { BT.data = d; try { localStorage.setItem('cermat_bintang_' + me.username, JSON.stringify(d)); } catch (e) { /* penuh */ } })
+      .catch(function (e) {
+        var simpan = null; try { simpan = JSON.parse(localStorage.getItem('cermat_bintang_' + me.username) || 'null'); } catch (x) { simpan = null; }
+        if (e.offline && simpan) BT.data = simpan; else BT.err = e.message;
+        if (e.code === 'AUTH') { clearSession(); renderAll(); }
+      })
+      .then(function () { BT.busy = false; if (onBintang()) renderBintang(); });
+  }
+  function renderBintang() {
+    var tv = $('tesview'); if (!tv || !me) return;
+    var d = BT.data;
+    tv.textContent = '';
+    tv.appendChild(h('div', { class: 'teshead' }, [
+      h('a', { class: 'btn ghost sm', href: '#/' }, [ic('back', 16, 2.2), h('span', { text: 'Folder utama' })]),
+      h('span', { class: 'spacer' }),
+      btn(BT.busy ? 'Memuat…' : 'Muat ulang', 'ghost sm', { disabled: BT.busy, onclick: muatBintang })
+    ]));
+    tv.appendChild(h('div', { class: 'label' }, [h('h2', { text: 'Perolehan Bintang' }),
+      h('p', { class: 'sub', text: (d ? d.sekolah + ' · ' : '') + 'Bintang reward setiap guru per pendampingan, diurutkan dari total terbanyak.' })]));
+    if (BT.err) { tv.appendChild(h('div', { class: 'empty-note', text: BT.err })); return; }
+    if (!d) { for (var i = 0; i < 3; i++) tv.appendChild(h('div', { class: 'skel' })); return; }
+    if (!d.orang.length) { tv.appendChild(h('div', { class: 'empty-note', text: 'Belum ada perolehan bintang. Bintang tercatat setelah fasilitator mengisi laporan pendampingan.' })); return; }
+    var orang = d.orang.slice().sort(function (a, b) { return b.total - a.total || a.nama.localeCompare(b.nama, 'id'); });
+    var rank = 0, prev = null;
+    orang.forEach(function (o, i) { if (o.total !== prev) { rank = i + 1; prev = o.total; } o.rank = rank; });   // nilai sama, peringkat sama
+    var ada = d.pendampingan.some(function (p) { return !p.sah; });
+    var cari = h('input', { type: 'search', class: 'bcari', placeholder: 'Cari nama…', 'aria-label': 'Cari nama', value: BT.cari });
+    var tbody = h('tbody');
+    var isi = function () {
+      var q = BT.cari.trim().toLowerCase();
+      tbody.textContent = '';
+      orang.filter(function (o) { return !q || o.nama.toLowerCase().indexOf(q) >= 0; }).forEach(function (o) {
+        tbody.appendChild(h('tr', { class: o.rank <= 3 ? 'top' + o.rank : '' }, [
+          h('td', { class: 'brk' }, [h('span', { class: 'rk', text: String(o.rank) })]),
+          h('td', { class: 'bnm' }, [h('b', { text: o.nama }), o.jabatan ? h('span', { text: o.jabatan }) : null]),
+          h('td', { class: 'btot' }, [ic('star', 14, 2), h('b', { text: String(o.total) })])
+        ].concat(d.pendampingan.map(function (p) {
+          var v = o.per[p.no];
+          return h('td', { class: 'num' + (v === undefined ? ' kosong' : '') + (p.sah ? '' : ' smt'), title: v === undefined ? 'Tidak hadir' : '', text: v === undefined ? '–' : String(v) });
+        }))));
+      });
+      if (!tbody.children.length) tbody.appendChild(h('tr', {}, [h('td', { colspan: String(3 + d.pendampingan.length), class: 'bnone', text: 'Nama tidak ditemukan.' })]));
+    };
+    cari.addEventListener('input', function () { BT.cari = cari.value; isi(); });
+    isi();
+    tv.appendChild(h('div', { class: 'bbar' }, [cari]));
+    tv.appendChild(h('div', { class: 'card bcard' }, [h('div', { class: 'tscroll bscroll' }, [h('table', { class: 'btab' }, [
+      h('thead', {}, [h('tr', {}, [h('th', { class: 'brk', text: '#' }), h('th', { class: 'bnm', text: 'Nama guru' }), h('th', { class: 'btot', text: 'Total' })]
+        .concat(d.pendampingan.map(function (p) { return h('th', { class: 'num' + (p.sah ? '' : ' smt'), title: p.sah ? 'Laporan sudah disahkan' : 'Laporan belum disahkan (sementara)', text: 'P' + p.no + (p.sah ? '' : '*') }); }))) ]),
+      tbody])])]));
+    tv.appendChild(h('p', { class: 'fh bnote', text: '– = tidak hadir pada pendampingan itu.' + (ada ? ' * = sementara: laporan pendampingan itu belum disahkan, angkanya masih bisa berubah.' : '') }));
+  }
+
+  /* =========================================================
    * MATERI (#/materi/<folderId>) — isi folder Drive kartu Modul, Lembar Kerja, Bahan Tayang
    * tampil di dalam CERMAT. Guru & kepsek hanya bisa membuka materi pendampingan yang sudah
    * ditampilkan fasilitator. PDF bisa disimpan di perangkat untuk dibaca tanpa internet.
@@ -985,7 +1062,7 @@
   }
 
   function renderView() {
-    var tv = $('tesview'), t = onTes(), mt = onMateri(), v = t || mt;
+    var tv = $('tesview'), t = onTes(), mt = onMateri(), bt = onBintang(), v = t || mt || bt;
     if (!tv) return;
     tv.hidden = !v;
     if (me) ['list', 'addwrap'].forEach(function (id) { $(id).hidden = v; });
@@ -994,6 +1071,7 @@
     var masuk = t && !tesWas;
     tesWas = t;
     if (mt) { var bag = location.hash.slice(9).split('/'); bukaMateri(bag[0], decodeURIComponent(bag.slice(1).join('/'))); return; }
+    if (bt) { bukaBintang(); return; }
     if (!t) return;
     if (masuk) tesData = null;   // selalu ambil status terbaru saat halaman dibuka
     renderTes();

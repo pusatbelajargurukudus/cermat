@@ -642,3 +642,32 @@ body.noscroll { overflow: hidden; }
   .mrgrid { grid-template-columns: 1fr; }
 }
 .mwaktu { margin: -6px 0 12px; font-size: 12px; color: var(--muted); }
+
+/* Perolehan Bintang */
+.bbar { margin: 0 0 12px; }
+.bcari { width: 100%; max-width: 360px; min-height: 42px; border: 1px solid var(--line-strong); border-radius: 10px; padding: 0 12px; font: inherit; color: var(--text); background: var(--surface); }
+.bcard { padding: 0; overflow: hidden; display: block; cursor: default; }
+.bcard:hover { transform: none; }
+.bscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.btab { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+.btab th, .btab td { padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--surface); text-align: left; white-space: nowrap; }
+.btab thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--bg); }
+.btab .num { text-align: center; min-width: 44px; font-variant-numeric: tabular-nums; }
+.btab .num.smt { color: var(--gold-ink); }
+.btab td.kosong { color: var(--muted); }
+.btab .brk { position: sticky; left: 0; z-index: 1; width: 44px; text-align: center; }
+.btab .bnm { position: sticky; left: 44px; z-index: 1; min-width: 170px; max-width: 240px; white-space: normal; box-shadow: 1px 0 0 var(--line); }
+.btab .bnm b { display: block; color: var(--ink); font-weight: 600; }
+.btab .bnm span { display: block; font-size: 12px; color: var(--muted); }
+.btab .btot { text-align: center; white-space: nowrap; }
+.btab td.btot { color: var(--gold-ink); }
+.btab td.btot svg { vertical-align: -2px; margin-right: 3px; fill: var(--gold); stroke: var(--gold); }
+.btab td.btot b { font-size: 16px; color: var(--ink); }
+.btab .rk { display: inline-grid; place-items: center; min-width: 26px; height: 26px; border-radius: 13px; font-size: 13px; font-weight: 700; color: var(--navy-2); background: var(--chip); }
+.btab tr.top1 .rk { background: var(--gold); color: #fff; }
+.btab tr.top2 .rk { background: #9aa6b8; color: #fff; }
+.btab tr.top3 .rk { background: #b88457; color: #fff; }
+.btab tbody tr:last-child td { border-bottom: 0; }
+.btab .bnone { text-align: center; color: var(--muted); position: static; }
+.bnote { margin-top: 10px; }
+@media (max-width: 480px) { .btab th, .btab td { padding: 9px 8px; } .btab .brk { width: 38px; } .btab .bnm { left: 38px; min-width: 128px; } }
