@@ -741,3 +741,7 @@ body.noscroll { overflow: hidden; }
 .pgleg > span { display: inline-flex; align-items: center; gap: 6px; }
 .pgleg i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; }
 @media (max-width: 480px) { .pseg { gap: 6px; } .psegb { padding: 0 6px; font-size: 13px; gap: 4px; } .pgtile b { font-size: 18px; } .pgind { flex-direction: column; } .pgcs { align-items: flex-start; flex-direction: row; } .btab td.dl { white-space: nowrap; } }
+.pn.sudah { opacity: .55; cursor: not-allowed; border-style: dashed; }
+.pn.sudah:hover { border-color: var(--line-strong); }
+.pn.sudah .pnj { color: #1E6B3E; font-weight: 600; }
+.pncek { margin-top: -4px; color: #1E6B3E; }

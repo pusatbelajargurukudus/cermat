@@ -728,7 +728,7 @@
    * #/progres/<sid>/<no>/<tab>    tab: nilai | capaian | bintang
    * Laporan yang belum disahkan ditandai sementara (*).
    * ========================================================= */
-  var PG = { pilih: null, data: {}, err: '', busy: false, cari: '' };
+  var PG = { pilih: null, data: {}, at: {}, err: '', busy: false, cari: '' };
   var CAP_NAMA = { sangat: 'Sangat memahami', paham: 'Memahami', cukup: 'Cukup', kurang: 'Kurang', belum: 'Belum memahami' };
   var CAP_URUT = ['sangat', 'paham', 'cukup', 'kurang', 'belum'];
   function capNorm(v) { return ({ tercapai: 'paham', sebagian: 'cukup' })[v] || (CAP_NAMA[v] ? v : 'paham'); }
@@ -761,12 +761,12 @@
     return silabusP;
   }
   function bukaProgres() {
-    if (PG.user !== me.username) PG = { user: me.username, pilih: null, data: {}, err: '', busy: false, cari: '' };   // ganti akun: data lama dibuang
+    if (PG.user !== me.username) PG = { user: me.username, pilih: null, data: {}, at: {}, err: '', busy: false, cari: '' };   // ganti akun: data lama dibuang
     var r = pgRute(); if (!r) return;
     renderProgres();
     if (PG.busy) return;
     if (!r.sid) { if (!PG.pilih) muatProgres(r); }
-    else if (!PG.data[r.sid]) muatProgres(r);
+    else if (!PG.data[r.sid] || Date.now() - (PG.at[r.sid] || 0) > 60000) muatProgres(r);   // data lebih dari 1 menit: ambil yang terbaru (data lama tampil dulu)
     if (r.no && r.no !== 'rekap' && !window.SILABUS) loadSilabus().then(function () { if (onProgres()) renderProgres(); }, function () { /* tampil tanpa teks indikator */ });
   }
   function muatProgres(r) {
@@ -774,13 +774,22 @@
     var kunci = 'cermat_progres_' + me.username + '_' + (r.sid || 'pilih');
     PG.busy = true; PG.err = ''; renderProgres();
     api('progresSekolah', r.sid && !sendiriPG() ? { sekolahId: r.sid } : {}).then(function (d) {
-      if (d.pilih) PG.pilih = d.pilih; else PG.data[r.sid] = d;
+      if (d.pilih) PG.pilih = d.pilih; else { PG.data[r.sid] = d; PG.at[r.sid] = Date.now(); }
       try { localStorage.setItem(kunci, JSON.stringify(d)); } catch (e) { /* penuh */ }
     }).catch(function (e) {
       var simpan = null; try { simpan = JSON.parse(localStorage.getItem(kunci) || 'null'); } catch (x) { simpan = null; }
       if (e.offline && simpan) { if (simpan.pilih) PG.pilih = simpan.pilih; else PG.data[r.sid] = simpan; } else PG.err = e.message;
       if (e.code === 'AUTH') { clearSession(); renderAll(); }
     }).then(function () { PG.busy = false; if (onProgres()) renderProgres(); });
+  }
+  /* Perbarui data: server mengambil jawaban terbaru Google Form untuk sekolah ini (paling sering 1x/menit), lalu dimuat ulang */
+  function perbaruiProgres(r) {
+    if (PG.busy) return;
+    PG.busy = true; renderProgres();
+    api('nilaiPerbarui', sendiriPG() ? {} : { sekolahId: r.sid }).then(function (x) {
+      toast(x && x.dilewati ? 'Data sekolah ini baru saja diperbarui. Menampilkan data terbaru.' : 'Data dari Google Form sudah diperbarui.');
+    }).catch(function (e) { toast(e.message, true); if (e.code === 'AUTH') { clearSession(); renderAll(); } })
+      .then(function () { PG.busy = false; muatProgres(r); });
   }
   function tglPendek(t) {
     var m = String(t || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -844,7 +853,8 @@
     tv.appendChild(h('div', { class: 'teshead' }, [
       h('a', { class: 'btn ghost sm', href: kembali[0] }, [ic('back', 16, 2.2), h('span', { text: kembali[1] })]),
       h('span', { class: 'spacer' }),
-      btn(PG.busy ? 'Memuat…' : 'Muat ulang', 'ghost sm', { disabled: PG.busy, onclick: function () { muatProgres(); } })
+      r.sid ? btn(PG.busy ? 'Memperbarui…' : 'Perbarui data', 'ghost sm', { disabled: PG.busy, onclick: function () { perbaruiProgres(r); } })
+        : btn(PG.busy ? 'Memuat…' : 'Muat ulang', 'ghost sm', { disabled: PG.busy, onclick: function () { muatProgres(); } })
     ]));
     var judul = function (t, sub) { tv.appendChild(h('div', { class: 'label' }, [h('h2', { text: t }), sub ? h('p', { class: 'sub', text: sub }) : null])); };
     var note = function (t) { tv.appendChild(h('div', { class: 'empty-note', text: t })); };
@@ -1367,18 +1377,34 @@
       go.href = tesUrl(t, jenis, sk, pilih.lain ? null : pilih);
       go.firstChild.textContent = pilih.lain ? 'Lanjut ke ' + lbl + ' (isi nama sendiri)' : 'Lanjut ke ' + lbl + ' sebagai ' + pilih.nama;
     };
+    var cekNote = h('p', { class: 'dnote pncek', text: 'Memeriksa siapa yang sudah mengerjakan…' });
     var item = function (o, lain) {
       var b = h('button', { type: 'button', class: 'pn' + (lain ? ' lain' : ''), role: 'radio', 'aria-checked': 'false' }, [
         h('span', { class: 'pnn', text: lain ? 'Nama saya tidak ada di daftar' : o.nama }),
         h('span', { class: 'pnj', text: lain ? 'Form dibuka dengan nama kosong, ketik sendiri' : (o.jabatan || '') + (o.nama === akhir ? (o.jabatan ? ' · ' : '') + 'terakhir dipilih di perangkat ini' : '') })]);
       b.addEventListener('click', function () {
+        if (b.disabled) return;
         [].forEach.call(list.querySelectorAll('.pn'), function (x) { x.classList.remove('on'); x.setAttribute('aria-checked', 'false'); });
         b.classList.add('on'); b.setAttribute('aria-checked', 'true');
         pilih = lain ? { lain: true } : o; setGo();
       });
       b._cari = lain ? '' : o.nama.toLowerCase();
+      b._nama = lain ? '' : o.nama;
       return b;
     };
+    // pretes, postes & refleksi hanya sekali: nama yang sudah mengirim tidak bisa dipilih
+    api('tesSudah', { no: t.no, jenis: jenis, semua: true, sekolahId: sk.id }).then(function (r) {
+      var sudah = {}; (r.nama || []).forEach(function (n) { sudah[n] = 1; });
+      var n = 0;
+      [].forEach.call(list.querySelectorAll('.pn'), function (x) {
+        if (!x._nama || !sudah[x._nama]) return;
+        n++; x.disabled = true; x.classList.add('sudah'); x.classList.remove('on');
+        x.querySelector('.pnj').textContent = 'Sudah mengerjakan ' + lbl.toLowerCase() + ' · hanya sekali';
+        if (pilih && pilih.nama === x._nama) { pilih = null; setGo(); }
+      });
+      cekNote.textContent = n ? n + ' nama sudah mengerjakan ' + lbl.toLowerCase() + ' dan tidak bisa mengulang.' : '';
+      cekNote.hidden = !n;
+    }).catch(function () { cekNote.hidden = true; });
     daftar.forEach(function (o) { list.appendChild(item(o)); });
     list.appendChild(item(null, true));
     cari.addEventListener('input', function () {
@@ -1392,8 +1418,8 @@
       setTimeout(function () { dd.close(); }, 50);
     });
     var dd = openDialog('Pilih nama Anda', [
-      h('p', { class: 'dnote', text: lbl + ' P' + t.no + ' · ' + sk.nama + '. Nama Anda terisi otomatis di form, jadi tidak perlu diketik.' }),
-      cari, list], [tutup, go]);
+      h('p', { class: 'dnote', text: lbl + ' P' + t.no + ' · ' + sk.nama + '. Nama Anda terisi otomatis di form, jadi tidak perlu diketik. ' + lbl + ' hanya bisa dikerjakan sekali.' }),
+      cekNote, cari, list], [tutup, go]);
     dd.form.addEventListener('submit', function (ev) { ev.preventDefault(); });
     dd.dlg.classList.add('pnd');
   }
@@ -1418,6 +1444,12 @@
       var st = t && sk ? ((t.status || {})[sk.id] || {}) : {};
       if (!t || !sk || !st.ref || !(t.ref && t.ref.url)) return;
       var orang = p.orang || (me.peran === 'kepsek' ? d.saya : null);
+      if (orang && orang.nama) return api('tesSudah', { no: t.no, jenis: 'ref', nama: orang.nama, sekolahId: sk.id }).then(function (r) { if (!r.sudah) tawarRefleksi(t, sk, orang, d); });
+      tawarRefleksi(t, sk, orang, d);
+    }).catch(function () { /* diam: tawaran hanya pelengkap */ });
+  }
+  function tawarRefleksi(t, sk, orang, d) {
+    {
       var pilihDulu = !orang && me.peran === 'guru' && t.ref.entNama && (d.orang || []).length;
       var nanti = btn('Nanti', 'ghost', { onclick: function () { dd.close(); } });
       var isi = pilihDulu
@@ -1426,7 +1458,7 @@
       var dd = openDialog('Postes selesai?', [
         h('p', { class: 'dnote', text: 'Lanjut isi Refleksi P' + t.no + ' · ' + (TES_JUDUL[t.no - 1] || '') + '. Bila belum sempat, refleksi tetap bisa diisi lewat tombol Isi Refleksi sampai ditutup fasilitator.' })], [nanti, isi]);
       dd.form.addEventListener('submit', function (ev) { ev.preventDefault(); });
-    }).catch(function () { /* diam: tawaran hanya pelengkap */ });
+    }
   }
   document.addEventListener('visibilitychange', cekTawaran);
 
@@ -1454,9 +1486,28 @@
     // guru: pilih nama dulu supaya nama di form sama persis dengan data; kepala sekolah: namanya langsung terisi
     if (me.peran === 'guru' && src.entNama && (d.orang || []).length) return btn(verb + lbl, 'pri', { onclick: function () { pilihNamaDialog(t, j, sk, d.orang); } });
     var saya = me.peran === 'kepsek' ? d.saya : null;
+    if (saya && saya.nama) return btn(verb + lbl, 'pri', { onclick: function () { sayaDialog(t, j, sk, saya); } });
     var a = h('a', { class: 'btn pri', href: tesUrl(t, j, sk, saya), target: '_blank', rel: 'noopener' }, [h('span', { text: verb + lbl })]);
     if (j === 'post') a.addEventListener('click', function () { tandaiPostes(t, sk, saya); });
     return a;
+  }
+  /* Kepala sekolah (nama sudah pasti): periksa dulu apakah sudah pernah mengirim, baru form dibuka */
+  function sayaDialog(t, j, sk, saya) {
+    var lbl = JENIS_LBL[j];
+    var note = h('p', { class: 'dnote', text: 'Memeriksa…' });
+    var go = h('a', { class: 'btn pri pngo', target: '_blank', rel: 'noopener', 'aria-disabled': 'true' }, [h('span', { text: 'Memeriksa…' })]);
+    go.addEventListener('click', function (ev) {
+      if (!go.href) { ev.preventDefault(); return; }
+      if (j === 'post') tandaiPostes(t, sk, saya);
+      setTimeout(function () { dd.close(); }, 50);
+    });
+    var dd = openDialog(lbl + ' P' + t.no, [note], [btn('Batal', 'ghost', { onclick: function () { dd.close(); } }), go]);
+    dd.form.addEventListener('submit', function (ev) { ev.preventDefault(); });
+    var buka = function (teks) { note.textContent = teks; go.href = tesUrl(t, j, sk, saya); go.removeAttribute('aria-disabled'); go.firstChild.textContent = 'Lanjut ke ' + lbl + ' sebagai ' + saya.nama; };
+    api('tesSudah', { no: t.no, jenis: j, nama: saya.nama, sekolahId: sk.id }).then(function (r) {
+      if (r.sudah) { note.textContent = saya.nama + ' sudah mengerjakan ' + lbl.toLowerCase() + ' P' + t.no + '. ' + lbl + ' hanya bisa dikerjakan sekali.'; go.firstChild.textContent = 'Sudah dikerjakan'; return; }
+      buka(lbl + ' P' + t.no + ' · ' + sk.nama + '. Nama Anda terisi otomatis. ' + lbl + ' hanya bisa dikerjakan sekali.');
+    }).catch(function () { buka(lbl + ' P' + t.no + ' · ' + sk.nama + '. ' + lbl + ' hanya bisa dikerjakan sekali.'); });
   }
 
   function renderTes() {
