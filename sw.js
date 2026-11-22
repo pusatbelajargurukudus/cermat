@@ -8,8 +8,8 @@
  * - Materi PDF yang disimpan offline ada di cache 'cermat-materi' (dikelola halaman, tidak dihapus saat pembaruan).
  * Naikkan CACHE bila index.html, assets/style.css, assets/app.js, atau fonts/ diubah.
  * Naikkan PANDUAN bila isi folder panduan/ diganti. */
-const CACHE = 'cermat-pustaka-v26';
-const PANDUAN = 'cermat-panduan-v20';
+const CACHE = 'cermat-pustaka-v27';
+const PANDUAN = 'cermat-panduan-v21';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'data.json',
   'assets/style.css?v=21', 'assets/app.js?v=26', 'assets/logo.png', 'fonts/fonts.css?v=1',
   'fonts/jakarta-400.woff2', 'fonts/jakarta-500.woff2', 'fonts/jakarta-600.woff2', 'fonts/jakarta-700.woff2', 'fonts/jakarta-800.woff2',
