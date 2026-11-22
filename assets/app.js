@@ -761,6 +761,7 @@
     return silabusP;
   }
   function bukaProgres() {
+    if (PG.user !== me.username) PG = { user: me.username, pilih: null, data: {}, err: '', busy: false, cari: '' };   // ganti akun: data lama dibuang
     var r = pgRute(); if (!r) return;
     renderProgres();
     if (PG.busy) return;
@@ -836,7 +837,9 @@
     var tv = $('tesview'); if (!tv || !me) return;
     var r = pgRute(); if (!r) return;
     var d = r.sid ? PG.data[r.sid] : null;
-    var kembali = !r.sid || (sendiriPG() && !r.no) ? ['#/', 'Folder utama'] : !r.no ? ['#/progres', 'Pilih sekolah'] : ['#/progres/' + r.sid, 'Daftar pendampingan'];
+    var satu = me.peran === 'fasilitator' && PG.pilih && PG.pilih.length === 1;   // fasil dengan satu sekolah binaan: tanpa halaman pilih sekolah
+    if (!r.sid && satu) { location.replace('#/progres/' + PG.pilih[0].id); return; }
+    var kembali = !r.sid || ((sendiriPG() || satu) && !r.no) ? ['#/', 'Folder utama'] : !r.no ? ['#/progres', 'Pilih sekolah'] : ['#/progres/' + r.sid, 'Daftar pendampingan'];
     tv.textContent = '';
     tv.appendChild(h('div', { class: 'teshead' }, [
       h('a', { class: 'btn ghost sm', href: kembali[0] }, [ic('back', 16, 2.2), h('span', { text: kembali[1] })]),
@@ -849,10 +852,10 @@
 
     // 1. pilih sekolah
     if (!r.sid) {
-      judul('Progres Pendampingan', 'Pilih sekolah untuk melihat nilai pretes & postes, capaian, dan bintang.');
+      judul('Progres Pendampingan', me.peran === 'fasilitator' ? 'Pilih sekolah binaan Anda untuk melihat nilai pretes & postes, capaian, dan bintang.' : 'Pilih sekolah untuk melihat nilai pretes & postes, capaian, dan bintang.');
       if (PG.err) return note(PG.err);
       if (!PG.pilih) return skel();
-      if (!PG.pilih.length) return note('Belum ada sekolah.');
+      if (!PG.pilih.length) return note(me.peran === 'fasilitator' ? 'Anda belum dipasangkan ke sekolah binaan. Hubungi admin program.' : 'Belum ada sekolah.');
       var g = h('div', { class: 'pglist' });
       PG.pilih.forEach(function (s) {
         g.appendChild(h('a', { class: 'card pgsk', href: '#/progres/' + s.id }, [
