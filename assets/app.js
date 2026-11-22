@@ -288,7 +288,7 @@
     });
     if (!shown) list.appendChild(h('div', { class: 'empty-note', text: admin ? 'Belum ada folder. Tekan "Tambah folder".' : 'Belum ada folder yang ditampilkan.' }));
     if (!admin) {
-      list.appendChild(tesHomeCard());
+      if (me.peran !== 'pemantau') list.appendChild(tesHomeCard());   // pemantau memantau lewat Progres Pendampingan
       list.appendChild(progresHomeCard());
       list.appendChild(guideCard());
     }
@@ -728,7 +728,7 @@
    * #/progres/<sid>/<no>/<tab>    tab: nilai | capaian | bintang
    * Laporan yang belum disahkan ditandai sementara (*).
    * ========================================================= */
-  var PG = { pilih: null, data: {}, at: {}, err: '', busy: false, cari: '' };
+  var PG = { pilih: null, banding: null, bno: 0, data: {}, at: {}, err: '', busy: false, cari: '' };
   var CAP_NAMA = { sangat: 'Sangat memahami', paham: 'Memahami', cukup: 'Cukup', kurang: 'Kurang', belum: 'Belum memahami' };
   var CAP_URUT = ['sangat', 'paham', 'cukup', 'kurang', 'belum'];
   function capNorm(v) { return ({ tercapai: 'paham', sebagian: 'cukup' })[v] || (CAP_NAMA[v] ? v : 'paham'); }
@@ -761,7 +761,7 @@
     return silabusP;
   }
   function bukaProgres() {
-    if (PG.user !== me.username) PG = { user: me.username, pilih: null, data: {}, at: {}, err: '', busy: false, cari: '' };   // ganti akun: data lama dibuang
+    if (PG.user !== me.username) PG = { user: me.username, pilih: null, banding: null, bno: 0, data: {}, at: {}, err: '', busy: false, cari: '' };   // ganti akun: data lama dibuang
     var r = pgRute(); if (!r) return;
     renderProgres();
     if (PG.busy) return;
@@ -774,11 +774,11 @@
     var kunci = 'cermat_progres_' + me.username + '_' + (r.sid || 'pilih');
     PG.busy = true; PG.err = ''; renderProgres();
     api('progresSekolah', r.sid && !sendiriPG() ? { sekolahId: r.sid } : {}).then(function (d) {
-      if (d.pilih) PG.pilih = d.pilih; else { PG.data[r.sid] = d; PG.at[r.sid] = Date.now(); }
+      if (d.pilih) { PG.pilih = d.pilih; PG.banding = d.banding || {}; } else { PG.data[r.sid] = d; PG.at[r.sid] = Date.now(); }
       try { localStorage.setItem(kunci, JSON.stringify(d)); } catch (e) { /* penuh */ }
     }).catch(function (e) {
       var simpan = null; try { simpan = JSON.parse(localStorage.getItem(kunci) || 'null'); } catch (x) { simpan = null; }
-      if (e.offline && simpan) { if (simpan.pilih) PG.pilih = simpan.pilih; else PG.data[r.sid] = simpan; } else PG.err = e.message;
+      if (e.offline && simpan) { if (simpan.pilih) { PG.pilih = simpan.pilih; PG.banding = simpan.banding || {}; } else PG.data[r.sid] = simpan; } else PG.err = e.message;
       if (e.code === 'AUTH') { clearSession(); renderAll(); }
     }).then(function () { PG.busy = false; if (onProgres()) renderProgres(); });
   }
@@ -883,6 +883,30 @@
         ]));
       });
       tv.appendChild(g);
+      // perbandingan nilai antar sekolah (pengganti "Lihat hasil" di kartu tes)
+      var nos = Object.keys(PG.banding || {}).map(Number).sort(function (a, b) { return a - b; });
+      if (nos.length) {
+        if (nos.indexOf(PG.bno) < 0) PG.bno = nos[nos.length - 1];
+        tv.appendChild(h('div', { class: 'label pgl' }, [h('h2', { text: 'Perbandingan nilai antar sekolah' }),
+          h('p', { class: 'sub', text: 'Pretes & postes dari laporan setiap sekolah. Pilih pendampingan.' })]));
+        tv.appendChild(h('div', { class: 'pgchips' }, nos.map(function (no) {
+          return h('button', { type: 'button', class: 'pgchip' + (no === PG.bno ? ' on' : ''), text: 'P' + no, onclick: function () { PG.bno = no; renderProgres(); } });
+        })));
+        var mm = function (x) { return x.n ? fmtN(x.min) + '–' + fmtN(x.max) : '–'; };
+        var tbb = h('tbody', {}, PG.banding[PG.bno].map(function (x) {
+          var nk = x.pre.n && x.post.n ? x.post.avg - x.pre.avg : null;
+          return h('tr', { class: x.semua ? 'pgsum' : '' }, [
+            h('td', { class: 'bnm nl' }, [h('b', { text: x.nama })]),
+            h('td', { class: 'num', text: x.pre.n + ' / ' + x.post.n }),
+            h('td', { class: 'num', text: x.pre.n ? fmtN(x.pre.avg) : '–' }), h('td', { class: 'num rng', text: mm(x.pre) }),
+            h('td', { class: 'num', text: x.post.n ? fmtN(x.post.avg) : '–' }), h('td', { class: 'num rng', text: mm(x.post) }),
+            h('td', { class: 'num dl ' + (nk === null ? 'kosong' : nk > 0 ? 'up' : nk < 0 ? 'down' : ''), text: nk === null ? '–' : (nk > 0 ? '▲ ' : nk < 0 ? '▼ ' : '') + fmtN(Math.abs(nk)) })
+          ]);
+        }));
+        tv.appendChild(tabel([h('th', { class: 'bnm nl', text: 'Sekolah' }), h('th', { class: 'num', text: 'Peserta pre/post' }),
+          h('th', { class: 'num', text: 'Rata pretes' }), h('th', { class: 'num', text: 'Rentang' }), h('th', { class: 'num', text: 'Rata postes' }), h('th', { class: 'num', text: 'Rentang' }), h('th', { class: 'num', text: 'Kenaikan' })], tbb));
+        tv.appendChild(h('p', { class: 'fh bnote', text: 'Rentang = nilai terendah–tertinggi. Laporan yang belum disahkan masih bisa berubah.' }));
+      }
       return;
     }
     var subSk = d ? d.sekolah.nama : '';
@@ -902,16 +926,17 @@
       ]));
       var grid = h('div', { class: 'tesgrid' });
       for (var no = 1; no <= 22; no++) {
-        var l = byNo[no];
+        var l = byNo[no], bk = (d.buka || {})[no];
         var kids = [
           h('div', { class: 'teshd' }, [h('span', { class: 'tesno', text: 'P' + no }), h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: 'Pendampingan ' + no }), h('span', { class: 'meta', text: judulP(no, l) })])]),
+          bk ? h('div', { class: 'pgbuka' }, [h('span', { class: 'pst buka', text: 'Sedang dibuka: ' + ['pre', 'post', 'ref'].filter(function (j) { return bk[j]; }).map(function (j) { return JENIS_LBL[j].toLowerCase(); }).join(', ') })]) : null,
           h('div', { class: 'pgmeta' }, [statusChip(l)].concat(l ? [
             l.tanggal ? h('span', { text: tglPendek(l.tanggal) }) : null,
             h('span', { text: l.hadir.length + ' hadir' }),
             adaTes(no) && nilaiStat(l).pre !== null ? h('span', { text: 'Nilai ' + fmtN(nilaiStat(l).pre) + ' → ' + fmtN(nilaiStat(l).post) }) : null
           ] : []))
         ];
-        grid.appendChild(l ? h('a', { class: 'card tes pgp', href: '#/progres/' + r.sid + '/' + no }, kids) : h('div', { class: 'card tes pgp off', 'aria-disabled': 'true' }, kids));
+        grid.appendChild(l || bk ? h('a', { class: 'card tes pgp', href: '#/progres/' + r.sid + '/' + no + (!l || bk ? '/isi' : '') }, kids) : h('div', { class: 'card tes pgp off', 'aria-disabled': 'true' }, kids));
       }
       tv.appendChild(h('div', { class: 'label pgl' }, [h('h2', { text: 'Per pendampingan' })]));
       tv.appendChild(grid);
@@ -964,14 +989,52 @@
     }
 
     // 4. satu pendampingan
-    var L = byNo[r.no];
+    var L = byNo[r.no], bk1 = (d.buka || {})[r.no];
     judul('P' + r.no + ' · ' + judulP(r.no, L), subSk + (L && L.tanggal ? ' · ' + tglPendek(L.tanggal) : ''));
-    if (!L) return note('Laporan pendampingan ini belum dibuat fasilitator.');
-    tv.appendChild(h('div', { class: 'pgstat' }, [statusChip(L), h('span', { text: L.hadir.length + ' peserta hadir' })]));
-    var tabs = (adaTes(r.no) ? [['nilai', 'Pretes & Postes', 'soal']] : []).concat([['capaian', 'Capaian', 'chart'], ['bintang', 'Bintang', 'star']]);
-    var t1 = tabs.some(function (t) { return t[0] === r.tab; }) ? r.tab : tabs[0][0];
+    if (!L && !bk1) return note('Laporan pendampingan ini belum dibuat fasilitator.');
+    tv.appendChild(h('div', { class: 'pgstat' }, [L ? statusChip(L) : null, L ? h('span', { text: L.hadir.length + ' peserta hadir' }) : null,
+      bk1 ? h('span', { class: 'pst buka', text: 'Sedang dibuka: ' + ['pre', 'post', 'ref'].filter(function (j) { return bk1[j]; }).map(function (j) { return JENIS_LBL[j].toLowerCase(); }).join(', ') }) : null]));
+    var tabs = (L ? (adaTes(r.no) ? [['nilai', 'Pretes & Postes', 'soal']] : []).concat([['capaian', 'Capaian', 'chart'], ['bintang', 'Bintang', 'star']]) : []).concat([['isi', 'Pengisian', 'users']]);
+    var t1 = tabs.some(function (t) { return t[0] === r.tab; }) ? r.tab : bk1 ? 'isi' : tabs[0][0];
     tv.appendChild(segmen(r, tabs, t1));
     var P = namaPeserta(d);
+    if (t1 === 'isi') {
+      // siapa sudah & belum mengerjakan, dibandingkan daftar guru (P khusus kelas: guru kelas itu + kepala sekolah)
+      var Lx = L || { tes: [], refNama: [] }, grp = (d.kelompok || {})[r.no];
+      var harap = d.peserta.filter(function (p) { return !grp || p.j === 'Kepala Sekolah' || (p.j === 'Guru Kelas' && grp.indexOf(p.k) >= 0); });
+      var kunciNm = function (t) { return String(t || '').trim().toLowerCase().replace(/\s+/g, ' '); };
+      var baris = {}, urutan = [];
+      var dapat = function (id, nama) { var k = id || 'n:' + kunciNm(nama); if (!baris[k]) { baris[k] = { nama: id && P[id] ? P[id].nama : nama, jabatan: id && P[id] ? P[id].jabatan : '', pre: false, post: false, ref: false, luar: true }; urutan.push(k); } return baris[k]; };
+      harap.forEach(function (p) { var b = dapat(p.id, p.nama); b.luar = false; });
+      Lx.tes.forEach(function (t) { var b = dapat(t.id, t.nama); if (t.pre !== null && t.pre !== undefined) b.pre = true; if (t.post !== null && t.post !== undefined) b.post = true; });
+      (Lx.refNama || []).forEach(function (x) { dapat(x.id, x.nama).ref = true; });
+      var kolom = adaTes(r.no) ? ['pre', 'post', 'ref'] : ['ref'];
+      var semua = urutan.map(function (k) { return baris[k]; });
+      var jmlH = semua.filter(function (b) { return !b.luar; }).length;
+      tv.appendChild(h('div', { class: 'pgtiles' }, kolom.map(function (j) {
+        var n = semua.filter(function (b) { return !b.luar && b[j]; }).length;
+        return h('div', { class: 'pgtile' + (n === jmlH && jmlH ? ' up' : '') }, [h('span', { text: JENIS_LBL[j] }), h('b', { text: n + ' / ' + jmlH })]);
+      })));
+      semua.sort(function (a, b) {
+        var ka = kolom.filter(function (j) { return !a[j]; }).length, kb = kolom.filter(function (j) { return !b[j]; }).length;
+        return kb - ka || a.luar - b.luar || a.nama.localeCompare(b.nama, 'id');
+      });
+      var tbi = h('tbody');
+      var isiI = function () {
+        tbi.textContent = '';
+        semua.filter(function (o) { return cocokCari(o.nama); }).forEach(function (o) {
+          tbi.appendChild(h('tr', {}, [h('td', { class: 'bnm nl' }, [h('b', { text: o.nama }), h('span', { text: o.luar ? 'tidak ada di daftar guru' : o.jabatan })])].concat(kolom.map(function (j) {
+            return h('td', { class: 'num isi ' + (o[j] ? 'up' : 'belum'), text: o[j] ? '✓' : 'belum' });
+          }))));
+        });
+        if (!tbi.children.length) tbi.appendChild(h('tr', {}, [h('td', { colspan: String(1 + kolom.length), class: 'bnone', text: 'Nama tidak ditemukan.' })]));
+      };
+      tv.appendChild(cariBox(isiI)); isiI();
+      tv.appendChild(tabel([h('th', { class: 'bnm nl', text: 'Nama' })].concat(kolom.map(function (j) { return h('th', { class: 'num', text: JENIS_LBL[j] }); })), tbi));
+      tv.appendChild(h('p', { class: 'fh bnote', text: (grp ? 'Yang diharapkan ikut: kepala sekolah dan guru kelas ' + grp.join(' & ') + '. ' : '') + 'Data dari Google Form yang sudah masuk ke laporan. Ketuk Perbarui data untuk yang terbaru.' }));
+      return;
+    }
+    if (!L) return note('Belum ada data.');
     if (t1 === 'nilai') {
       var st = nilaiStat(L);
       if (!L.tes.length) return note(L.ada ? 'Nilai pretes & postes belum diambil fasilitator.' : 'Ringkasan laporan ini belum terbaca. Ketuk Muat ulang.');
@@ -1573,7 +1636,7 @@
         sks.forEach(function (sk) { var st = (t.status || {})[sk.id]; if (st) { var on = ['pre', 'post', 'ref'].filter(function (j) { return st[j]; }); if (on.length) aktif.push(sk.nama + ': ' + on.map(function (j) { return JENIS_LBL[j].toLowerCase(); }).join(' & ')); } });
         if (jenisAda.length) kids.push(h('div', { class: 'tesnote' + (aktif.length ? ' ok' : '') }, aktif.length ? aktif.map(function (x) { return h('div', { text: 'Dibuka · ' + x }); }) : [h('span', { text: 'Tidak ada sekolah yang sedang membuka form ini.' })]));
         kids.push(h('div', { class: 'tesbtns' }, [
-          t.ada ? hasilBtn(t) : null, adaRef ? refBtn(t) : null,
+          adaRef ? refBtn(t) : null,   // nilai & perbandingan antar sekolah ada di Progres Pendampingan
           peran === 'admin' && t.url ? h('a', { class: 'btn ghost sm', href: tesUrl(t, 'pre'), target: '_blank', rel: 'noopener' }, [h('span', { text: 'Lihat form tes' })]) : null,
           peran === 'admin' && adaRef && t.ref.url ? h('a', { class: 'btn ghost sm', href: tesUrl(t, 'ref'), target: '_blank', rel: 'noopener' }, [h('span', { text: 'Lihat form refleksi' })]) : null]));
       }
