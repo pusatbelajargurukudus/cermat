@@ -546,7 +546,7 @@ body.need-login .label, body.need-login #list, body.need-login #addwrap { displa
   .roundel img { height: 44px; }
   .bt { gap: 3px; }
   h1 { font-size: 25px; line-height: 1.05; }
-  .tagline { font-size: 13.5px; }
+  .tagline { font-size: clamp(10px, 3vw, 13.5px); white-space: nowrap; }   /* satu baris */
   .pill { height: auto; padding: 3px; }
   .pill .nm { display: none; }
   /* halaman dalam (materi, tes, progres): bilah tipis */
