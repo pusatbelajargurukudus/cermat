@@ -745,3 +745,4 @@ body.noscroll { overflow: hidden; }
 .pn.sudah:hover { border-color: var(--line-strong); }
 .pn.sudah .pnj { color: #1E6B3E; font-weight: 600; }
 .pncek { margin-top: -4px; color: #1E6B3E; }
+.pst.tunggu { background: #E3ECFB; color: #1E4590; }

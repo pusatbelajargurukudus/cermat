@@ -870,7 +870,15 @@
       PG.pilih.forEach(function (s) {
         g.appendChild(h('a', { class: 'card pgsk', href: '#/progres/' + s.id }, [
           h('div', { class: 'chipicon' }, [ic('chart', 24)]),
-          h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: s.nama }), h('div', { class: 'meta' }, [h('span', { text: s.laporan ? s.laporan + ' laporan' : 'Belum ada laporan' })].concat(s.saya ? [h('span', { class: 'pst sah', text: 'sekolah Anda' })] : []))]),
+          h('div', { class: 'txt' }, [h('span', { class: 'ttl', text: s.nama }), h('div', { class: 'meta' }, (function () {
+            var j = s.status || {}, out = [];
+            // jumlah laporan per status (sama dengan Lihat Laporan)
+            if (j.sah) out.push(h('span', { class: 'pst sah', text: j.sah + ' disahkan' }));
+            if (j.tunggu) out.push(h('span', { class: 'pst tunggu', text: j.tunggu + ' menunggu pengesahan' }));
+            if (j.draf) out.push(h('span', { class: 'pst smt', text: j.draf + ' draf' }));
+            if (!out.length) out.push(h('span', { text: s.laporan ? s.laporan + ' laporan' : 'Belum ada laporan' }));
+            return out;
+          })())]),
           h('div', { class: 'go' }, [ic('arrow', 18, 2)])
         ]));
       });
