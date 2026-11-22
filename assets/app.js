@@ -1295,6 +1295,7 @@
     var tv = $('tesview'), t = onTes(), mt = onMateri(), pg = onProgres(), v = t || mt || pg;
     if (!tv) return;
     tv.hidden = !v;
+    document.body.classList.toggle('inpage', !!v);   // HP: header jadi bilah tipis di halaman dalam
     if (me) ['list', 'addwrap'].forEach(function (id) { $(id).hidden = v; });
     var lb = document.querySelector('.label'); if (lb && me) lb.hidden = v;
     clearInterval(tesTimer); tesTimer = null;

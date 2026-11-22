@@ -536,26 +536,34 @@ body.need-login .label, body.need-login #list, body.need-login #addwrap { displa
 }
 @media (max-width: 719px) {
   .wrap { padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
-  .mitra { padding-top: 16px; gap: 8px; }
+  /* header ringkas di HP: logo di samping judul, akun berupa inisial */
+  .mitra { padding-top: 10px; gap: 6px; }
   .pita { min-width: 14px; }
   .pita em { width: 5px; height: 5px; }
-  .partners { --s: .7; border-radius: 12px; }
-  .brandrow { flex-wrap: wrap; justify-content: center; gap: 18px 20px; padding-top: 26px; padding-bottom: 30px; text-align: center; }
-  .roundel { width: 92px; height: 92px; }
-  .roundel img { height: 68px; }
-  .bt { align-items: center; gap: 6px; }
-  h1 { font-size: 36px; }
-  .tagline { font-size: 17px; }
-  .userbar { margin-left: 0; flex-basis: 100%; display: flex; justify-content: center; }
+  .partners { --s: .5; border-radius: 10px; }
+  .brandrow { gap: 12px; padding-top: 14px; padding-bottom: 18px; }
+  .roundel { width: 58px; height: 58px; box-shadow: 0 0 0 1px var(--gold), 0 0 0 4px var(--navy), 0 0 0 5px var(--gold); }
+  .roundel img { height: 44px; }
+  .bt { gap: 3px; }
+  h1 { font-size: 25px; line-height: 1.05; }
+  .tagline { font-size: 13.5px; }
+  .pill { height: auto; padding: 3px; }
+  .pill .nm { display: none; }
+  /* halaman dalam (materi, tes, progres): bilah tipis */
+  body.inpage .mitra, body.inpage .tagline { display: none; }
+  body.inpage .brandrow { gap: 10px; padding-top: 10px; padding-bottom: 10px; }
+  body.inpage .roundel { width: 36px; height: 36px; box-shadow: 0 0 0 1px var(--gold); }
+  body.inpage .roundel img { height: 28px; }
+  body.inpage h1 { font-size: 19px; }
+  body.inpage .page { padding-top: 16px; }
   .page { padding-top: 24px; }
   #list { grid-template-columns: 1fr; gap: 12px; }
   .card { padding: 16px; gap: 14px; }
   .chipicon { width: 46px; height: 46px; }
 }
 @media (max-width: 419px) {
-  .partners { --s: .62; }
-  .mitra { gap: 6px; }
-  h1 { font-size: 32px; }
+  .partners { --s: .46; }
+  h1 { font-size: 23px; }
   .two { grid-template-columns: 1fr; }
 }
 
