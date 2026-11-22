@@ -1234,7 +1234,7 @@
     Promise.all([loadImporter(), api('tesResponses', semua ? { no: t.no, jenis: 'ref' } : { no: t.no, jenis: 'ref', sekolahId: (sks[0] || {}).id })]).then(function (r) {
       var I = r[0], res = r[1];
       body.textContent = '';
-      body.appendChild(h('p', { class: 'dnote', text: 'Langsung dari Google Form "' + (res.judul || '') + '" · ' + res.jumlah + ' jawaban. Rangkuman analisis jawaban ada di laporan pendampingan (LAPORAN CERMAT → langkah Lampiran).' }));
+      body.appendChild(h('p', { class: 'dnote', text: 'Langsung dari Google Form "' + (res.judul || '') + '" · ' + res.jumlah + ' jawaban. Rangkuman analisis jawaban ada di laporan pendampingan (LAPORAN CERMAT → langkah 3).' }));
       if (!res.jumlah) { body.appendChild(h('div', { class: 'empty-note', text: 'Belum ada yang mengisi.' })); return; }
       var an = I.analyze(res.rows), c = an.cols;
       if (c.nama < 0 || c.sekolah < 0) throw new Error('Pertanyaan Nama atau Asal sekolah tidak ditemukan di form refleksi.');
