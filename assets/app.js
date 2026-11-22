@@ -763,7 +763,7 @@
     if (!d.orang.length) { tv.appendChild(h('div', { class: 'empty-note', text: 'Belum ada perolehan bintang. Bintang tercatat setelah fasilitator mengisi laporan pendampingan.' })); return; }
     var orang = d.orang.slice().sort(function (a, b) { return b.total - a.total || a.nama.localeCompare(b.nama, 'id'); });
     var rank = 0, prev = null;
-    orang.forEach(function (o, i) { if (o.total !== prev) { rank = i + 1; prev = o.total; } o.rank = rank; });   // nilai sama, peringkat sama
+    orang.forEach(function (o) { if (o.total !== prev) { rank++; prev = o.total; } o.rank = rank; });   // nilai sama, peringkat sama; nomor tidak lompat
     var ada = d.pendampingan.some(function (p) { return !p.sah; });
     var cari = h('input', { type: 'search', class: 'bcari', placeholder: 'Cari nama…', 'aria-label': 'Cari nama', value: BT.cari });
     var tbody = h('tbody');
@@ -771,7 +771,7 @@
       var q = BT.cari.trim().toLowerCase();
       tbody.textContent = '';
       orang.filter(function (o) { return !q || o.nama.toLowerCase().indexOf(q) >= 0; }).forEach(function (o) {
-        tbody.appendChild(h('tr', { class: o.rank <= 3 ? 'top' + o.rank : '' }, [
+        tbody.appendChild(h('tr', { class: o.rank <= 3 && o.total > 0 ? 'top' + o.rank : '' }, [
           h('td', { class: 'brk' }, [h('span', { class: 'rk', text: String(o.rank) })]),
           h('td', { class: 'bnm' }, [h('b', { text: o.nama }), o.jabatan ? h('span', { text: o.jabatan }) : null]),
           h('td', { class: 'btot' }, [ic('star', 14, 2), h('b', { text: String(o.total) })])
