@@ -1079,11 +1079,11 @@
         li.forEach(function (i) {
           var c = capNorm(L.cap[i.id]);
           box.appendChild(h('div', { class: 'pgind' }, [h('p', { text: i.teks }), h('div', { class: 'pgcs' }, [h('span', { class: 'pcap ' + c, text: CAP_NAMA[c] }),
-            L.auto.indexOf(i.id) >= 0 ? h('span', { class: 'pgsrc', text: 'dari refleksi' }) : null])]));
+            L.auto.indexOf(i.id) >= 0 ? h('span', { class: 'pgsrc', text: (L.autoPost || []).indexOf(i.id) >= 0 ? 'dari postes' : 'dari refleksi' }) : null])]));
         });
       });
       tv.appendChild(box);
-      tv.appendChild(h('p', { class: 'fh bnote', text: (L.ref ? 'Refleksi diisi ' + L.ref + ' peserta. ' : '') + 'Capaian berlaku untuk seluruh peserta pendampingan ini.' + (L.sah ? '' : ' Laporan belum disahkan, capaian masih bisa berubah.') }));
+      tv.appendChild(h('p', { class: 'fh bnote', text: ((L.autoPost || []).length ? 'Capaian pengetahuan dari rata-rata postes. ' : '') + (L.ref ? 'Refleksi diisi ' + L.ref + ' peserta. ' : '') + 'Capaian berlaku untuk seluruh peserta pendampingan ini.' + (L.sah ? '' : ' Laporan belum disahkan, capaian masih bisa berubah.') }));
       return;
     }
     var ob1 = peringkat(L.hadir.filter(function (id) { return P[id]; }).map(function (id) { return { nama: P[id].nama, jabatan: P[id].jabatan, v: L.reward[id] || 0 }; }), function (o) { return o.v; });
